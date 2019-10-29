@@ -67,12 +67,13 @@ fn derive_enum(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
 /// via [`synstructure`].
 fn derive_enum_impl(mut structure: Structure) -> Result<proc_macro2::TokenStream> {
     match crate::util::get_nested_meta(&structure.ast().attrs, "event") {
-        Ok(Some(_)) | Err(_) => {
+        Ok(Some(_)) => {
             return Err(Error::new(
                 structure.ast().span(),
-                "#[error(...)] attribute is not allowed for enums",
+                "#[event(...)] attribute is not allowed for enums",
             ));
         }
+        Err(error) => return Err(error),
         _ => (),
     };
 
