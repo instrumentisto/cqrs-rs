@@ -22,27 +22,26 @@ pub(crate) fn get_nested_meta(
 
         let meta = match attr.parse_meta()? {
             syn::Meta::List(meta) => meta,
-            _ => return Err(Error::new(
-                attr.span(),
-                format!(
-                    "Wrong attribute format; expected #[{}(...)]",
-                    name
-                )
-            )),
+            _ => {
+                return Err(Error::new(
+                    attr.span(),
+                    format!("Wrong attribute format; expected #[{}(...)]", name),
+                ))
+            }
         };
 
-        if nested.is_none() {
-            nested.replace(meta.nested);
-        } else {
+        if nested.is_some() {
             return Err(Error::new(
                 meta.span(),
                 format!(
                     "Too many #[{}(...)] attributes specified, \
-                             only single attribute is allowed",
+                     only single attribute is allowed",
                     name
-                )
+                ),
             ));
         }
+
+        nested.replace(meta.nested);
     }
 
     Ok(nested)

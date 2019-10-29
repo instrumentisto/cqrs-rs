@@ -33,7 +33,7 @@ fn derive_struct(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
 
     let meta = util::get_nested_meta(&attrs, "event")?.ok_or_else(|| {
         Error::new(
-            proc_macro2::Span::call_site(),
+            ident.span(),
             "Expected struct to have #[event(...)] attribute",
         )
     })?;
@@ -116,8 +116,7 @@ fn derive_enum_impl(mut structure: Structure) -> Result<proc_macro2::TokenStream
 fn parse_event_type_from_nested_meta(
     meta: Punctuated<syn::NestedMeta, syn::Token![,]>,
 ) -> Result<String> {
-    const WRONG_FORMAT: &str = "Wrong format; proper format is \
-                                #[event(type = \"...\")]";
+    const WRONG_FORMAT: &str = "Wrong attribute format; expected #[event(type = \"...\")]";
 
     let mut event_type = None;
 
