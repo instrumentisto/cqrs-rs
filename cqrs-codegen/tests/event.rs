@@ -19,3 +19,9 @@ enum EnumEventGeneric<E1, E2> {
     Event1(E1),
     Event2(E2),
 }
+
+// TODO
+#[test]
+fn assert_stuff() {
+    unimplemented!()
+}

@@ -1,28 +1,26 @@
-use proc_macro2;
+//! Codegen for [`cqrs::Event`].
 
 use quote::quote;
-
 use syn::{
-    self,
     parse::{Error, Result},
+    punctuated::Punctuated,
     spanned::Spanned as _,
 };
+use synstructure::Structure;
 
-use synstructure;
-
-use crate::utility;
-
-// ...
-
-pub fn event(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
+/// Implements [`crate::derive_event`] macro expansion.
+pub(crate) fn derive(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
     match input.data {
         syn::Data::Struct(_) => derive_struct(input),
         syn::Data::Enum(_) => derive_enum(input),
-        syn::Data::Union(data) => Err(Error::new(data.union_token.span(), "Event can only be derived for structs and enums")),
+        syn::Data::Union(data) => Err(Error::new(
+            data.union_token.span(),
+            "Unions are not supported for deriving Event",
+        )),
     }
 }
 
-
+/// Implements [`crate::derive_event`] macro expansion for structs.
 fn derive_struct(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
     let syn::DeriveInput {
         attrs,
@@ -31,99 +29,72 @@ fn derive_struct(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
         ..
     } = input;
 
-    let meta = utility::get_nested_meta(attrs, "event")?
-        .ok_or_else(|| Error::new(proc_macro2::Span::call_site(), "Expected to find #[event(...)] attribute"))?;
+    let meta = crate::util::get_nested_meta(&attrs, "event")?.ok_or_else(|| {
+        Error::new(
+            proc_macro2::Span::call_site(),
+            "Expected struct to have #[event(...)] attribute",
+        )
+    })?;
 
     let event_type = parse_event_type_from_nested_meta(meta)?;
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-    let render = quote! {
+    let const_doc = format!("Type name of [`{}`] event", ident);
+
+    Ok(quote! {
+        #[automatically_derived]
         impl#impl_generics #ident#ty_generics #where_clause {
+            #[doc = #const_doc]
             pub const EVENT_TYPE: ::cqrs::EventType = #event_type;
         }
 
+        #[automatically_derived]
         impl#impl_generics ::cqrs::Event for #ident#ty_generics #where_clause {
             fn event_type(&self) -> ::cqrs::EventType {
                 Self::EVENT_TYPE
             }
         }
-    };
-
-    Ok(render)
+    })
 }
 
-fn parse_event_type_from_nested_meta(meta: syn::punctuated::Punctuated<syn::NestedMeta, syn::Token![,]>) -> Result<String> {
-    const WRONG_FORMAT: &str = "Wrong format; proper format is #[event(type = \"...\")]";
-
-    let mut event_type = None;
-
-    meta.into_iter().try_for_each(|meta| -> Result<_> {
-        match meta {
-            syn::NestedMeta::Meta(meta) => {
-                match meta {
-                    syn::Meta::NameValue(meta) => {
-                        if meta.path.is_ident("type") {
-                            match meta.lit {
-                                syn::Lit::Str(lit) => {
-                                    update_if_none_or(&mut event_type, lit.value(), || Error::new(lit.span(), "Too many #[event(type = \"...\")] attributes specified; single attribute allowed"))
-                                },
-                                _ => Err(Error::new(meta.lit.span(), WRONG_FORMAT)),
-                            }
-                        } else {
-                            Err(Error::new(meta.span(), WRONG_FORMAT))
-                        }
-                    },
-                    _ => Err(Error::new(meta.span(), WRONG_FORMAT)),
-                }
-            },
-            _ => Err(Error::new(meta.span(), WRONG_FORMAT)),
-        }
-    })?;
-
-    event_type.ok_or_else(|| Error::new(proc_macro2::Span::call_site(), "Expected to find #[event(type = \"...\")] attribute"))
-}
-
-fn update_if_none_or<T, E>(option: &mut Option<T>, value: T, error: E) -> Result<()>
-    where E: FnOnce() -> Error
-{
-    if option.is_none() {
-        option.replace(value);
-        Ok(())
-    } else {
-        Err(error())
-    }
-}
-
-
+/// Implements [`crate::derive_event`] macro expansion for enums.
 fn derive_enum(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
-    let structure = synstructure::Structure::try_new(&input)?;
-    derive_enum_impl(structure)
+    derive_enum_impl(Structure::try_new(&input)?)
 }
 
-fn derive_enum_impl(mut structure: synstructure::Structure) -> Result<proc_macro2::TokenStream> {
-    structure.variants().iter().try_for_each(|variant| -> Result<()> {
+/// Implements [`crate::derive_event`] macro expansion for enums
+/// via [`synstructure`].
+fn derive_enum_impl(mut structure: Structure) -> Result<proc_macro2::TokenStream> {
+    for variant in structure.variants() {
         let ast = variant.ast();
-        if ast.fields.len() == 1 {
-            Ok(())
-        } else {
-            Err(Error::new(ast.ident.span(), "Event can only be derived for enums with variants that have exactly one field"))
+        if ast.fields.len() != 1 {
+            return Err(Error::new(
+                ast.ident.span(),
+                "Event can only be derived for enums with variants that have \
+                 exactly one field",
+            ));
         }
-    })?;
+    }
+
+    // TODO: check if #[event(type = ...)] is present and disallow it.
 
     structure.add_bounds(synstructure::AddBounds::Fields);
 
-    structure.binding_name(|field, _| field.ident.as_ref().map_or_else(
-        || syn::Ident::new("event", proc_macro2::Span::call_site()),
-        |ident| ident.clone()
-    ));
+    structure.binding_name(|field, _| {
+        field.ident.as_ref().map_or_else(
+            || syn::Ident::new("event", proc_macro2::Span::call_site()),
+            |ident| ident.clone(),
+        )
+    });
 
     let body = structure.each(|binding_info| {
         let ident = &binding_info.binding;
         quote!(#ident.event_type())
     });
 
-    let render = structure.gen_impl(quote! {
+    Ok(structure.gen_impl(quote! {
+        #[automatically_derived]
         gen impl ::cqrs::Event for @Self {
             fn event_type(&self) -> ::cqrs::EventType {
                 match *self {
@@ -131,18 +102,57 @@ fn derive_enum_impl(mut structure: synstructure::Structure) -> Result<proc_macro
                 }
             }
         }
-    });
-
-    Ok(render)
+    }))
 }
 
+/// Parses type of [`cqrs::Event`] from `#[event(...)]` attribute.
+fn parse_event_type_from_nested_meta(
+    meta: Punctuated<syn::NestedMeta, syn::Token![,]>,
+) -> Result<String> {
+    const WRONG_FORMAT: &str = "Wrong format; proper format is \
+                                #[event(type = \"...\")]";
+
+    let mut event_type = None;
+
+    for m in meta {
+        let m = match m {
+            syn::NestedMeta::Meta(m) => m,
+            _ => return Err(Error::new(m.span(), WRONG_FORMAT)),
+        };
+        let m = match m {
+            syn::Meta::NameValue(m) => m,
+            _ => return Err(Error::new(m.span(), WRONG_FORMAT)),
+        };
+        if !m.path.is_ident("type") {
+            return Err(Error::new(m.span(), WRONG_FORMAT));
+        }
+        let lit = match m.lit {
+            syn::Lit::Str(lit) => lit,
+            _ => return Err(Error::new(m.lit.span(), WRONG_FORMAT)),
+        };
+        if event_type.replace(lit.value()).is_some() {
+            return Err(Error::new(
+                lit.span(),
+                "Only one #[event(type = \"...\")] attribute is allowed",
+            ));
+        }
+    }
+
+    event_type.ok_or_else(|| {
+        Error::new(
+            proc_macro2::Span::call_site(),
+            "Expected to have #[event(type = \"...\")] attribute",
+        )
+    })
+}
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::intrinsics::uninit;
 
     #[test]
-    fn event_struct() {
+    fn derives_struct_impl() {
         let input = syn::parse_quote! {
             #[event(type = "event")]
             struct Event;
@@ -151,10 +161,13 @@ mod test {
         let output = derive_struct(input).unwrap();
 
         let expected_output = quote! {
+            #[automatically_derived]
             impl Event {
+                #[doc = "Type name of [`Event`] event"]
                 pub const EVENT_TYPE: ::cqrs::EventType = "event";
             }
 
+            #[automatically_derived]
             impl ::cqrs::Event for Event {
                 fn event_type(&self) -> ::cqrs::EventType {
                     Self::EVENT_TYPE
@@ -163,5 +176,11 @@ mod test {
         };
 
         assert_eq!(output.to_string(), expected_output.to_string());
+    }
+
+    #[test]
+    fn derives_enum_impl() {
+        // TODO
+        unimplemented!()
     }
 }

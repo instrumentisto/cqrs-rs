@@ -1,38 +1,38 @@
-mod event;
-mod utility;
-
 extern crate proc_macro;
 
-use proc_macro2;
-use syn;
+mod event;
+mod util;
 
-// ...
+use proc_macro::TokenStream;
+use syn::parse::Result;
 
-/// Derives ::cqrs::Event for structs and enums.
+/// Derives [`cqrs::Event`] implementation for structs and enums.
 ///
-/// # Deriving for structs
+/// # Structs
 ///
-/// When deriving ::cqrs::Event for struct, the struct is treated as a single distinct event.
+/// When deriving [`cqrs::Event`] for struct, the struct is treated as
+/// a single distinct event.
 ///
-/// Deriving ::cqrs::Event for struct __requires__ specifying `#[event(type = "...")]` attribute (and only single
-/// such attribute allowed per struct).
+/// Specifying `#[event(type = "...")]` attribute is __mandatory__ (and only
+/// single such attribute allowed per struct).
 ///
-/// # Deriving for enums
+/// # Enums
 ///
-/// When deriving ::cqrs::Event for enum, the enum is treated as a sum-type representing an event from a set of
-/// possible events.
+/// When deriving [`cqrs::Event`] for enum, the enum is treated as a sum-type
+/// representing a set of possible events.
 ///
-/// In practice this means, that ::cqrs::Event can only be derived for a enum when all variants of such enum
-/// have exactly one field (variant can be both a tuple-variant or a struct-variant) and the field have to
-/// implement ::cqrs::Event itself.
+/// In practice this means, that [`cqrs::Event`] can only be derived for a enum
+/// when all variants of such enum have exactly one field (variant can be both
+/// a tuple-variant or a struct-variant) and the field have to implement
+/// [`cqrs::Event`] itself.
 ///
-/// Generated implementation of `::cqrs::Event::event_type` would match on all variants and proxy calls to each
-/// variant's field.
+/// Generated implementation of [`cqrs::Event::event_type`] would match on all
+/// variants and proxy calls to each variant's field.
 ///
 /// # Examples
 /// ```
-/// use cqrs_codegen::Event;
-///
+/// # use cqrs_codegen::Event;
+/// #
 /// #[derive(Event)]
 /// #[event(type = "user.created")]
 /// struct UserCreated;
@@ -48,18 +48,16 @@ use syn;
 /// }
 /// ```
 #[proc_macro_derive(Event, attributes(event))]
-pub fn event(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    expand(input, event::event)
+pub fn derive_event(input: TokenStream) -> TokenStream {
+    expand(input, event::derive)
 }
 
-// ...
+type MacroImpl = fn(syn::DeriveInput) -> Result<proc_macro2::TokenStream>;
 
-type MacroImpl = fn(syn::DeriveInput) -> syn::parse::Result<proc_macro2::TokenStream>;
-
-fn expand(input: proc_macro::TokenStream, macro_impl: MacroImpl) -> proc_macro::TokenStream {
-    let result = syn::parse(input).and_then(|input| macro_impl(input));
-    match result {
-        Ok(result) => result.into(),
-        Err(error) => error.to_compile_error().into(),
+/// Expands given input [`TokenStream`] with a given macro implementation.
+fn expand(input: TokenStream, macro_impl: MacroImpl) -> TokenStream {
+    match syn::parse(input).and_then(|i| macro_impl(i)) {
+        Ok(res) => res.into(),
+        Err(err) => err.to_compile_error().into(),
     }
 }
