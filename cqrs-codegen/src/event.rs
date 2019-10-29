@@ -8,6 +8,8 @@ use syn::{
 };
 use synstructure::Structure;
 
+use crate::util;
+
 /// Implements [`crate::derive_event`] macro expansion.
 pub(crate) fn derive(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
     match input.data {
@@ -29,7 +31,7 @@ fn derive_struct(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
         ..
     } = input;
 
-    let meta = crate::util::get_nested_meta(&attrs, "event")?.ok_or_else(|| {
+    let meta = util::get_nested_meta(&attrs, "event")?.ok_or_else(|| {
         Error::new(
             proc_macro2::Span::call_site(),
             "Expected struct to have #[event(...)] attribute",
@@ -66,15 +68,12 @@ fn derive_enum(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
 /// Implements [`crate::derive_event`] macro expansion for enums
 /// via [`synstructure`].
 fn derive_enum_impl(mut structure: Structure) -> Result<proc_macro2::TokenStream> {
-    match crate::util::get_nested_meta(&structure.ast().attrs, "event") {
-        Ok(Some(_)) | Err(_) => {
-            return Err(Error::new(
-                structure.ast().span(),
-                "#[error(...)] attribute is not allowed for enums",
-            ));
-        }
-        _ => (),
-    };
+    if util::get_nested_meta(&structure.ast().attrs, "event")?.is_some() {
+        return Err(Error::new(
+            structure.ast().span(),
+            "#[event(...)] attribute is not allowed for enums",
+        ));
+    }
 
     for variant in structure.variants() {
         let ast = variant.ast();
