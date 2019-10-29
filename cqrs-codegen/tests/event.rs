@@ -2,7 +2,7 @@ use cqrs::Event as _;
 use cqrs_codegen::Event;
 
 #[test]
-fn derive_event_for_struct() {
+fn derives_for_struct() {
     #[derive(Default, Event)]
     #[event(type = "test.event")]
     struct TestEvent {
@@ -15,23 +15,22 @@ fn derive_event_for_struct() {
 }
 
 #[test]
-fn derive_event_for_generic_struct() {
+fn derives_for_generic_struct() {
     #[derive(Default, Event)]
-    #[event(type = "test.event")]
+    #[event(type = "test.event.generic")]
     struct TestEventGeneric<ID, Data> {
         id: ID,
         data: Data,
     };
 
-    assert_eq!(TestEventGeneric::<i32, String>::EVENT_TYPE, "test.event");
-    assert_eq!(
-        TestEventGeneric::<i32, String>::default().event_type(),
-        "test.event"
-    );
+    type TestEvent = TestEventGeneric<i32, String>;
+
+    assert_eq!(TestEvent::EVENT_TYPE, "test.event.generic");
+    assert_eq!(TestEvent::default().event_type(), "test.event.generic");
 }
 
 #[test]
-fn derive_event_for_enum() {
+fn derives_for_enum() {
     #[derive(Default, Event)]
     #[event(type = "test.event.1")]
     struct TestEvent1;
@@ -60,7 +59,7 @@ fn derive_event_for_enum() {
 }
 
 #[test]
-fn derive_event_for_generic_enum() {
+fn derives_for_generic_enum() {
     #[derive(Default, Event)]
     #[event(type = "test.event.1")]
     struct TestEvent1;
