@@ -1,27 +1,118 @@
+use cqrs::Event as _;
 use cqrs_codegen::Event;
 
-#[derive(Event)]
-#[event(type = "event.1")]
-struct Event1;
-
-#[derive(Event)]
-#[event(type = "event.2")]
-struct Event2;
-
-#[derive(Event)]
-enum EnumEvent {
-    Event1(Event1),
-    Event2(Event2),
-}
-
-#[derive(Event)]
-enum EnumEventGeneric<E1, E2> {
-    Event1(E1),
-    Event2(E2),
-}
-
-// TODO
 #[test]
-fn assert_stuff() {
-    unimplemented!()
+fn derive_event_for_struct() {
+    #[derive(Default, Event)]
+    #[event(type = "test.event")]
+    struct TestEvent {
+        id: i32,
+        data: String,
+    };
+
+    assert_eq!(TestEvent::EVENT_TYPE, "test.event");
+    assert_eq!(TestEvent::default().event_type(), "test.event");
+}
+
+#[test]
+fn derive_event_for_generic_struct() {
+    #[derive(Default, Event)]
+    #[event(type = "test.event")]
+    struct TestEventGeneric<ID, Data> {
+        id: ID,
+        data: Data,
+    };
+
+    assert_eq!(TestEventGeneric::<i32, String>::EVENT_TYPE, "test.event");
+    assert_eq!(
+        TestEventGeneric::<i32, String>::default().event_type(),
+        "test.event"
+    );
+}
+
+#[test]
+fn derive_event_for_enum() {
+    #[derive(Default, Event)]
+    #[event(type = "test.event.1")]
+    struct TestEvent1;
+
+    #[derive(Default, Event)]
+    #[event(type = "test.event.2")]
+    struct TestEvent2;
+
+    #[derive(Event)]
+    enum TestEvent {
+        TestEventTuple(TestEvent1),
+        TestEventStruct { event: TestEvent2 },
+    }
+
+    assert_eq!(
+        TestEvent::TestEventTuple(Default::default()).event_type(),
+        "test.event.1"
+    );
+    assert_eq!(
+        TestEvent::TestEventStruct {
+            event: Default::default()
+        }
+        .event_type(),
+        "test.event.2"
+    );
+}
+
+#[test]
+fn derive_event_for_generic_enum() {
+    #[derive(Default, Event)]
+    #[event(type = "test.event.1")]
+    struct TestEvent1;
+
+    #[derive(Default, Event)]
+    #[event(type = "test.event.2")]
+    struct TestEvent2;
+
+    #[derive(Default, Event)]
+    #[event(type = "test.event.generic.1")]
+    struct TestEventGeneric1<ID, Data> {
+        id: ID,
+        data: Data,
+    }
+
+    #[derive(Default, Event)]
+    #[event(type = "test.event.generic.2")]
+    struct TestEventGeneric2<ID, Data> {
+        id: ID,
+        data: Data,
+    }
+
+    #[derive(Event)]
+    enum TestEventGeneric<TE1, TE2, ID, Data> {
+        TestEventTuple(TE1),
+        TestEventStruct { event: TE2 },
+        TestEventTupleGeneric(TestEventGeneric1<ID, Data>),
+        TestEventStructGeneric { event: TestEventGeneric2<ID, Data> },
+    }
+
+    type TestEvent = TestEventGeneric<TestEvent1, TestEvent2, i32, String>;
+
+    assert_eq!(
+        TestEvent::TestEventTuple(Default::default()).event_type(),
+        "test.event.1"
+    );
+    assert_eq!(
+        TestEvent::TestEventStruct {
+            event: Default::default()
+        }
+        .event_type(),
+        "test.event.2"
+    );
+    assert_eq!(
+        TestEvent::TestEventTupleGeneric(Default::default()).event_type(),
+        "test.event.generic.1"
+    );
+    assert_eq!(
+        TestEvent::TestEventStructGeneric {
+            event: Default::default()
+        }
+        .event_type(),
+        "test.event.generic.2"
+    );
 }

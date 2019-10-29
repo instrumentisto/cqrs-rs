@@ -55,6 +55,9 @@ use async_trait::async_trait;
 pub use cqrs_core::*;
 
 #[doc(inline)]
+pub use cqrs_codegen::*;
+
+#[doc(inline)]
 pub use self::{
     event_processing::{EventHandler, EventProcessingConfiguration, RegisteredEvent},
     lifecycle::BorrowableAsContext,

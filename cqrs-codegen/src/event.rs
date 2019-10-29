@@ -66,6 +66,16 @@ fn derive_enum(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
 /// Implements [`crate::derive_event`] macro expansion for enums
 /// via [`synstructure`].
 fn derive_enum_impl(mut structure: Structure) -> Result<proc_macro2::TokenStream> {
+    match crate::util::get_nested_meta(&structure.ast().attrs, "event") {
+        Ok(Some(_)) | Err(_) => {
+            return Err(Error::new(
+                structure.ast().span(),
+                "#[error(...)] attribute is not allowed for enums",
+            ));
+        }
+        _ => (),
+    };
+
     for variant in structure.variants() {
         let ast = variant.ast();
         if ast.fields.len() != 1 {
@@ -76,8 +86,6 @@ fn derive_enum_impl(mut structure: Structure) -> Result<proc_macro2::TokenStream
             ));
         }
     }
-
-    // TODO: check if #[event(type = ...)] is present and disallow it.
 
     structure.add_bounds(synstructure::AddBounds::Fields);
 
@@ -149,7 +157,6 @@ fn parse_event_type_from_nested_meta(
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::intrinsics::uninit;
 
     #[test]
     fn derives_struct_impl() {
@@ -180,7 +187,30 @@ mod test {
 
     #[test]
     fn derives_enum_impl() {
-        // TODO
-        unimplemented!()
+        synstructure::test_derive! {
+            derive_enum_impl {
+                enum Event {
+                    Event1(Event1),
+                    Event2 {
+                        other_event: Event2,
+                    },
+                }
+            }
+            expands to {
+                #[allow(non_upper_case_globals)]
+                const _DERIVE_cqrs_Event_FOR_Event: () = {
+                    #[automatically_derived]
+                    impl ::cqrs::Event for Event {
+                        fn event_type(&self) -> ::cqrs::EventType {
+                            match *self {
+                                Event::Event1(ref event,) => {{ event.event_type() }}
+                                Event::Event2{other_event: ref other_event,} => {{ other_event.event_type() }}
+                            }
+                        }
+                    }
+                };
+            }
+            no_build
+        }
     }
 }
