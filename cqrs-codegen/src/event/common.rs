@@ -12,10 +12,7 @@ use crate::util;
 
 pub const OUTER_ATTR_NAME: &str = "event";
 
-pub const INNER_ATTR_NAMES: &[&str] = &[
-    "type",
-    "version",
-];
+pub const INNER_ATTR_NAMES: &[&str] = &["type", "version"];
 
 /// Implements macro expansion for enums for [`cqrs::Event`] proc-macro-derive family.
 pub fn derive_enum_impl(
@@ -38,7 +35,7 @@ pub fn derive_enum_impl(
                 format!(
                     "{} can only be derived for enums with variants that have exactly one field",
                     trait_name
-                )
+                ),
             ));
         }
     }
@@ -88,7 +85,10 @@ pub fn parse_attr_from_nested_meta<'meta>(
         if meta.path.is_ident(attr_name) && attr.replace(&meta.lit).is_some() {
             return Err(Error::new(
                 meta.span(),
-                format!("Only one #[event({})] attribute is allowed", expected_format),
+                format!(
+                    "Only one #[event({})] attribute is allowed",
+                    expected_format
+                ),
             ));
         }
     }
@@ -103,5 +103,8 @@ pub fn parse_attr_from_nested_meta<'meta>(
 
 /// Returns "Wrong attribute format" error message.
 pub fn wrong_format(expected_format: &str) -> String {
-    format!("Wrong attribute format; expected #[event({})]", expected_format)
+    format!(
+        "Wrong attribute format; expected #[event({})]",
+        expected_format
+    )
 }

@@ -60,7 +60,7 @@ fn derives_for_enum() {
         *TestEvent::TestEventStruct {
             event: Default::default()
         }
-            .event_version(),
+        .event_version(),
         version2
     );
 }
@@ -112,7 +112,7 @@ fn derives_for_generic_enum() {
         *TestEvent::TestEventStruct {
             event: Default::default()
         }
-            .event_version(),
+        .event_version(),
         version2
     );
     assert_eq!(
@@ -123,7 +123,7 @@ fn derives_for_generic_enum() {
         *TestEvent::TestEventStructGeneric {
             event: Default::default()
         }
-            .event_version(),
+        .event_version(),
         version4
     );
 }

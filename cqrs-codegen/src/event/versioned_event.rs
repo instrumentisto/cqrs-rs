@@ -41,11 +41,7 @@ pub fn derive_struct(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream
     let const_val = parse_event_version_from_nested_meta(&meta)?;
     let const_doc = format!("Version of [`{}`] event", ident);
 
-    let (
-        impl_generics,
-        ty_generics,
-        where_clause
-    ) = generics.split_for_impl();
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     Ok(quote! {
         #[automatically_derived]
@@ -73,11 +69,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
 /// Implements [`crate::derive_versioned_event`] macro expansion for enums
 /// via [`crate::event::common::derive_enum_impl`] and [`synstructure`].
 fn derive_enum_impl(mut structure: Structure) -> Result<proc_macro2::TokenStream> {
-    let body = event::common::derive_enum_impl(
-        &mut structure,
-        "VersionedEvent",
-        "event_version"
-    )?;
+    let body = event::common::derive_enum_impl(&mut structure, "VersionedEvent", "event_version")?;
 
     Ok(structure.gen_impl(quote! {
         #[automatically_derived]
@@ -97,18 +89,16 @@ fn parse_event_version_from_nested_meta(
 ) -> Result<u8> {
     const EXPECTED_FORMAT: &str = "version = <non-zero unsigned integer>";
 
-    let lit = event::common::parse_attr_from_nested_meta(
-        meta,
-        "version",
-        EXPECTED_FORMAT
-    )?;
+    let lit = event::common::parse_attr_from_nested_meta(meta, "version", EXPECTED_FORMAT)?;
 
     let event_version = match lit {
         syn::Lit::Int(lit) => lit.base10_parse::<std::num::NonZeroU8>()?.get(), // TODO
-        _ => return Err(Error::new(
-            lit.span(),
-            event::common::wrong_format(EXPECTED_FORMAT)
-        )),
+        _ => {
+            return Err(Error::new(
+                lit.span(),
+                event::common::wrong_format(EXPECTED_FORMAT),
+            ))
+        }
     };
 
     Ok(event_version)

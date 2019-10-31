@@ -41,11 +41,7 @@ pub fn derive_struct(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream
     let const_val = parse_event_type_from_nested_meta(&meta)?;
     let const_doc = format!("Type name of [`{}`] event", ident);
 
-    let (
-        impl_generics,
-        ty_generics,
-        where_clause
-    ) = generics.split_for_impl();
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     Ok(quote! {
         #[automatically_derived]
@@ -71,11 +67,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
 /// Implements [`crate::derive_event`] macro expansion for enums
 /// via [`crate::event::common::derive_enum_impl`] and [`synstructure`].
 fn derive_enum_impl(mut structure: Structure) -> Result<proc_macro2::TokenStream> {
-    let body = event::common::derive_enum_impl(
-        &mut structure,
-        "Event",
-        "event_type"
-    )?;
+    let body = event::common::derive_enum_impl(&mut structure, "Event", "event_type")?;
 
     Ok(structure.gen_impl(quote! {
         #[automatically_derived]
@@ -95,18 +87,16 @@ fn parse_event_type_from_nested_meta(
 ) -> Result<String> {
     const EXPECTED_FORMAT: &str = "type = \"...\"";
 
-    let lit = event::common::parse_attr_from_nested_meta(
-        meta,
-        "type",
-        EXPECTED_FORMAT
-    )?;
+    let lit = event::common::parse_attr_from_nested_meta(meta, "type", EXPECTED_FORMAT)?;
 
     let event_type = match lit {
         syn::Lit::Str(lit) => lit.value(),
-        _ => return Err(Error::new(
-            lit.span(),
-            event::common::wrong_format(EXPECTED_FORMAT)
-        )),
+        _ => {
+            return Err(Error::new(
+                lit.span(),
+                event::common::wrong_format(EXPECTED_FORMAT),
+            ))
+        }
     };
 
     Ok(event_type)
