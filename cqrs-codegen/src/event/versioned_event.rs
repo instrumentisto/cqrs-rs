@@ -1,3 +1,5 @@
+//! Codegen for [`cqrs::VersionedEvent`]
+
 use quote::quote;
 use syn::{
     parse::{Error, Result},
@@ -69,7 +71,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
 }
 
 /// Implements [`crate::derive_versioned_event`] macro expansion for enums
-/// via [`synstructure`].
+/// via [`crate::event::common::derive_enum_impl`] and [`synstructure`].
 fn derive_enum_impl(mut structure: Structure) -> Result<proc_macro2::TokenStream> {
     let body = event::common::derive_enum_impl(
         &mut structure,
@@ -89,7 +91,7 @@ fn derive_enum_impl(mut structure: Structure) -> Result<proc_macro2::TokenStream
     }))
 }
 
-/// Parses type of [`cqrs::Event`] from `#[event(...)]` attribute.
+/// Parses version of [`cqrs::Event`] from `#[event(...)]` attribute.
 fn parse_event_version_from_nested_meta(
     meta: &Punctuated<syn::NestedMeta, syn::Token![,]>,
 ) -> Result<u8> {

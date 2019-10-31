@@ -1,4 +1,4 @@
-//! Codegen for [`cqrs::Event`].
+//! Codegen for [`cqrs::Event`] and related (e.g., [`cqrs::VersionedEvent`], etc).
 
 mod common;
 mod event;

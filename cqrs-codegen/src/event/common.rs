@@ -1,3 +1,5 @@
+//! Shared implementation details for [`cqrs::Event`] proc-macro-derive family
+
 use quote::quote;
 use syn::{
     parse::{Error, Result},
@@ -15,6 +17,7 @@ pub const INNER_ATTR_NAMES: &[&str] = &[
     "version",
 ];
 
+/// Implements macro expansion for enums for [`cqrs::Event`] proc-macro-derive family.
 pub fn derive_enum_impl(
     structure: &mut Structure,
     trait_name: &str,
@@ -49,8 +52,7 @@ pub fn derive_enum_impl(
         )
     });
 
-    let method_name: syn::Ident = syn::parse_str(method_name)
-        .expect("Internal error in macro implementation");
+    let method_name = syn::Ident::new(method_name, proc_macro2::Span::call_site());
 
     let body = structure.each(|binding_info| {
         let ident = &binding_info.binding;
@@ -60,6 +62,7 @@ pub fn derive_enum_impl(
     Ok(body)
 }
 
+/// Parses required inner attribute from `#[event(...)]` outer attribute.
 pub fn parse_attr_from_nested_meta<'meta>(
     meta: &'meta Punctuated<syn::NestedMeta, syn::Token![,]>,
     attr_name: &str,
@@ -98,6 +101,7 @@ pub fn parse_attr_from_nested_meta<'meta>(
     })
 }
 
+/// Returns "Wrong attribute format" error message.
 pub fn wrong_format(expected_format: &str) -> String {
     format!("Wrong attribute format; expected #[event({})]", expected_format)
 }
