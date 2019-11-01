@@ -10,9 +10,8 @@ use synstructure::Structure;
 
 use crate::util;
 
-pub const OUTER_ATTR_NAME: &str = "event";
-
-pub const INNER_ATTR_NAMES: &[&str] = &["type", "version"];
+pub const ATTR_NAME: &str = "event";
+pub const ATTR_ARGS: &[&str] = &["type", "version"];
 
 /// Implements macro expansion for enums for [`cqrs::Event`] proc-macro-derive family.
 pub fn derive_enum_impl(
@@ -20,7 +19,7 @@ pub fn derive_enum_impl(
     trait_name: &str,
     method_name: &str,
 ) -> Result<proc_macro2::TokenStream> {
-    if util::get_nested_meta(&structure.ast().attrs, OUTER_ATTR_NAME)?.is_some() {
+    if util::get_nested_meta(&structure.ast().attrs, ATTR_NAME)?.is_some() {
         return Err(Error::new(
             structure.ast().span(),
             "#[event(...)] attribute is not allowed for enums",
@@ -78,7 +77,7 @@ pub fn parse_attr_from_nested_meta<'meta>(
             _ => return Err(Error::new(meta.span(), wrong_format(expected_format))),
         };
 
-        if !INNER_ATTR_NAMES.iter().any(|attr| meta.path.is_ident(attr)) {
+        if !ATTR_ARGS.iter().any(|attr| meta.path.is_ident(attr)) {
             return Err(Error::new(meta.span(), "Invalid attribute"));
         }
 
