@@ -1,4 +1,4 @@
-//! Shared implementation details for [`cqrs::Event`] proc-macro-derive family
+//! Shared implementation details for [`cqrs::Event`] proc-macro-derive family.
 
 use quote::quote;
 use syn::{
@@ -100,10 +100,7 @@ pub fn parse_attr_from_nested_meta<'meta>(
     })
 }
 
-/// Returns "Wrong attribute format" error message.
-pub fn wrong_format(expected_format: &str) -> String {
-    format!(
-        "Wrong attribute format; expected #[event({})]",
-        expected_format
-    )
+/// Constructs error message about wrong attribute format.
+pub fn wrong_format(expected: &str) -> String {
+    format!("Wrong attribute format; expected #[event({})]", expected)
 }
