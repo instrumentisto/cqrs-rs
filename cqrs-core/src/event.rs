@@ -176,7 +176,6 @@ impl EventVersion {
         Some(Self(NonZeroU8::new(n.into())?))
     }
 
-    #[cfg(feature = "unsafe")]
     /// Creates new [`EventVersion`] from a raw [`u8`] value without
     /// checking it.
     ///

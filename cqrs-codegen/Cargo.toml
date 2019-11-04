@@ -19,4 +19,4 @@ syn = "1.0.6"
 synstructure = "0.12.1"
 
 [dev-dependencies]
-cqrs = { version = "0.3", path = "../cqrs", features = ["unsafe"] }
+cqrs = { version = "0.3", path = "../cqrs" }
