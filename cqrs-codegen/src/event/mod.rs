@@ -46,7 +46,8 @@ fn render_struct(
     })
 }
 
-/// Checks that all variants of `structure` contain exactly one field. Returns error otherwise.
+/// Checks that all variants of `structure` contain exactly one field.
+/// Returns error otherwise.
 ///
 /// `trait_name` is only used to generate error message.
 fn assert_all_enum_variants_have_single_field(
@@ -72,7 +73,8 @@ fn assert_all_enum_variants_have_single_field(
 /// Renders implementation of trait with path `trait_path` as a `method`
 /// that proxies call to it's variants.
 ///
-/// Expects that all variants of `structure` contain exactly one field. Returns error otherwise.
+/// Expects that all variants of `structure` contain exactly one field.
+/// Returns error otherwise.
 ///
 /// `trait_name` is only used to generate error message.
 fn render_enum_proxy_method_calls(
