@@ -27,7 +27,7 @@ pub(crate) fn derive<DS, DE>(
         syn::Data::Enum(_) => derive_enum(input),
         syn::Data::Union(data) => Err(Error::new(
             data.union_token.span(),
-            format!("Unions are not supported for deriving {}", trait_name)
+            format!("Unions are not supported for deriving {}", trait_name),
         )),
     }
 }
@@ -38,7 +38,10 @@ pub(crate) fn assert_attr_does_not_exist(attrs: &[syn::Attribute], attr_name: &s
     if let Some((span, _)) = meta {
         return Err(Error::new(
             span,
-            format!("Expected no attribute #[{}(...)], but found one.", attr_name)
+            format!(
+                "Expected no attribute #[{}(...)], but found one.",
+                attr_name
+            ),
         ));
     }
 
@@ -49,23 +52,24 @@ pub(crate) fn assert_attr_does_not_exist(attrs: &[syn::Attribute], attr_name: &s
 ///
 /// Errors **if attribute not found** or if multiple attributes with the same `attr_name` exist.
 pub(crate) fn get_nested_meta(attrs: &[syn::Attribute], attr_name: &str) -> Result<Meta> {
-    find_nested_meta(attrs, attr_name)
-        .and_then(|meta| {
-            meta.ok_or_else(|| {
-                Error::new(
-                    proc_macro2::Span::call_site(),
-                    format!("Expected attribute #[{}(...)], but none was found.", attr_name)
-                )
-            })
+    find_nested_meta(attrs, attr_name).and_then(|meta| {
+        meta.ok_or_else(|| {
+            Error::new(
+                proc_macro2::Span::call_site(),
+                format!(
+                    "Expected attribute #[{}(...)], but none was found.",
+                    attr_name
+                ),
+            )
         })
+    })
 }
 
 /// Finds attribute named with a given `attr_name` and returns its inner parameters, if found.
 ///
 /// Errors if multiple attributes with the same `attr_name` exist.
 pub(crate) fn find_nested_meta(attrs: &[syn::Attribute], attr_name: &str) -> Result<Option<Meta>> {
-    find_nested_meta_impl(attrs, attr_name)
-        .map(|meta| meta.map(|(_, meta)| meta))
+    find_nested_meta_impl(attrs, attr_name).map(|meta| meta.map(|(_, meta)| meta))
 }
 
 /// Finds attribute named with a given `attr_name` and returns its *span (for possible
@@ -74,7 +78,7 @@ pub(crate) fn find_nested_meta(attrs: &[syn::Attribute], attr_name: &str) -> Res
 /// Errors if multiple attributes with the same `attr_name` exist.
 fn find_nested_meta_impl(
     attrs: &[syn::Attribute],
-    attr_name: &str
+    attr_name: &str,
 ) -> Result<Option<(proc_macro2::Span, Meta)>> {
     let mut nested_meta = None;
 

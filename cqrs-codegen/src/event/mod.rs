@@ -3,12 +3,12 @@
 mod event;
 mod versioned_event;
 
-pub(crate) use event::derive as derive;
+pub(crate) use event::derive;
 pub(crate) use versioned_event::derive as versioned_derive;
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Error, Result, spanned::Spanned};
+use syn::{spanned::Spanned, Error, Result};
 use synstructure::Structure;
 
 use crate::util::{self, TryInto as _};
@@ -100,18 +100,16 @@ fn render_enum_proxy_method_calls(
         quote!(#ev.#method())
     });
 
-    Ok(
-        structure.gen_impl(quote! {
-            #[automatically_derived]
-            gen impl #trait_path for @Self {
-                fn #method(&self) -> #method_return_type {
-                    match *self {
-                        #body
-                    }
+    Ok(structure.gen_impl(quote! {
+        #[automatically_derived]
+        gen impl #trait_path for @Self {
+            fn #method(&self) -> #method_return_type {
+                match *self {
+                    #body
                 }
             }
-        })
-    )
+        }
+    }))
 }
 
 /// Parses required inner attribute from `#[event(...)]` outer attribute,
@@ -123,11 +121,10 @@ fn parse_attr_from_nested_meta<'meta, T>(
 ) -> Result<&'meta T>
     where &'meta syn::Lit: util::TryInto<&'meta T>
 {
-    parse_attr_from_nested_meta_impl(meta, attr_name, expected_format)
-        .and_then(|lit| {
-            let span = lit.span();
-            lit.try_into().ok_or_else(move || wrong_format(span, expected_format))
-        })
+    parse_attr_from_nested_meta_impl(meta, attr_name, expected_format).and_then(|lit| {
+        let span = lit.span();
+        lit.try_into().ok_or_else(move || wrong_format(span, expected_format))
+    })
 }
 
 /// Parses required inner attribute from `#[event(...)]` outer attribute.
@@ -156,7 +153,10 @@ fn parse_attr_from_nested_meta_impl<'meta>(
         if meta.path.is_ident(attr_name) && attr.replace(&meta.lit).is_some() {
             return Err(Error::new(
                 meta.span(),
-                format!("Only one #[event({})] attribute is allowed", expected_format),
+                format!(
+                    "Only one #[event({})] attribute is allowed",
+                    expected_format
+                ),
             ));
         }
     }
@@ -175,6 +175,9 @@ fn wrong_format<S>(span: S, expected_format: &str) -> Error
 {
     Error::new(
         span.span(),
-        format!("Wrong attribute format; expected #[event({})]", expected_format),
+        format!(
+            "Wrong attribute format; expected #[event({})]",
+            expected_format
+        ),
     )
 }

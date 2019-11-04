@@ -61,7 +61,7 @@ fn parse_event_version_from_nested_meta(meta: &util::Meta) -> Result<u8> {
     super::parse_attr_from_nested_meta::<syn::LitInt>(
         meta,
         "version",
-        "version = <non-zero unsigned integer>"
+        "version = <non-zero unsigned integer>",
     )
         .and_then(|lit| Ok(lit.base10_parse::<std::num::NonZeroU8>()?.get()))
 }

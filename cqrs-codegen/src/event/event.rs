@@ -59,7 +59,7 @@ fn parse_event_type_from_nested_meta(meta: &util::Meta) -> Result<String> {
     super::parse_attr_from_nested_meta::<syn::LitStr>(
         meta,
         "type",
-        "type = \"...\""
+        "type = \"...\"",
     )
         .map(|lit| lit.value())
 }
