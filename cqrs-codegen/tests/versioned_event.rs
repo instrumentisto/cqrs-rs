@@ -1,4 +1,4 @@
-use cqrs::{Event as _, VersionedEvent as _};
+use cqrs::VersionedEvent as _;
 use cqrs_codegen::{Event, VersionedEvent};
 
 #[test]
