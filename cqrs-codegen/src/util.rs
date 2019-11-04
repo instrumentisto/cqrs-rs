@@ -2,7 +2,8 @@
 
 use proc_macro2::TokenStream;
 use syn::{
-    parse::{Error, Result},
+    Error,
+    Result,
     punctuated::Punctuated,
     spanned::Spanned as _,
 };

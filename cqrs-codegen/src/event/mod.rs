@@ -8,10 +8,7 @@ pub(crate) use versioned_event::derive as versioned_derive;
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{
-    parse::{Error, Result},
-    spanned::Spanned,
-};
+use syn::{Error, Result, spanned::Spanned};
 use synstructure::Structure;
 
 use crate::util::{self, TryInto as _};
