@@ -69,8 +69,8 @@ pub fn derive_event(input: TokenStream) -> TokenStream {
 /// can be either a tuple-variant or a struct-variant).
 ///
 /// Generated implementation of [`cqrs::RegisteredEvent::type_id`] would
-/// match on all variants and return [`core::any::TypeId`] of each variant's
-/// field (__without proxying call to it__, so fields don't have to implement
+/// match on all variants and return [`cqrs::RegisteredEvent::type_id`] of each
+/// variant's field (__with a proxy call__, so fields do have to implement
 /// [`cqrs::RegisteredEvent`] themself).
 ///
 /// # Examples
