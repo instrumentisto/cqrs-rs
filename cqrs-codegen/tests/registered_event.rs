@@ -20,9 +20,9 @@ fn derives_for_generic_struct() {
     #[derive(Default, Event, RegisteredEvent)]
     #[event(type = "test.event.generic")]
     struct TestEventGeneric<ID, Data>
-        where
-            ID: 'static,
-            Data: 'static,
+    where
+        ID: 'static,
+        Data: 'static,
     {
         id: ID,
         data: Data,
@@ -57,7 +57,7 @@ fn derives_for_enum() {
         TestEvent::TestEventStruct {
             event: Default::default()
         }
-            .type_id(),
+        .type_id(),
         TypeId::of::<TestEvent2>()
     );
 }
@@ -75,9 +75,9 @@ fn derives_for_generic_enum() {
     #[derive(Default, Event, RegisteredEvent)]
     #[event(type = "test.event.generic.1")]
     struct TestEventGeneric1<ID, Data>
-        where
-            ID: 'static,
-            Data: 'static,
+    where
+        ID: 'static,
+        Data: 'static,
     {
         id: ID,
         data: Data,
@@ -86,9 +86,9 @@ fn derives_for_generic_enum() {
     #[derive(Default, Event, RegisteredEvent)]
     #[event(type = "test.event.generic.2")]
     struct TestEventGeneric2<ID, Data>
-        where
-            ID: 'static,
-            Data: 'static,
+    where
+        ID: 'static,
+        Data: 'static,
     {
         id: ID,
         data: Data,
@@ -96,9 +96,9 @@ fn derives_for_generic_enum() {
 
     #[derive(Event, RegisteredEvent)]
     enum TestEventGeneric<TE1, TE2, ID, Data>
-        where
-            ID: 'static,
-            Data: 'static,
+    where
+        ID: 'static,
+        Data: 'static,
     {
         TestEventTuple(TE1),
         TestEventStruct { event: TE2 },
@@ -116,7 +116,7 @@ fn derives_for_generic_enum() {
         TestEvent::TestEventStruct {
             event: Default::default()
         }
-            .type_id(),
+        .type_id(),
         TypeId::of::<TestEvent2>()
     );
     assert_eq!(
@@ -127,7 +127,7 @@ fn derives_for_generic_enum() {
         TestEvent::TestEventStructGeneric {
             event: Default::default()
         }
-            .type_id(),
+        .type_id(),
         TypeId::of::<TestEventGeneric2<i32, String>>()
     );
 }

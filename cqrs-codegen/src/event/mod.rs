@@ -91,20 +91,19 @@ pub fn render_enum(
     method: TokenStream,
     method_return_type: TokenStream,
     body: TokenStream,
-    where_clause: Option<syn::WhereClause>
+    where_clause: Option<syn::WhereClause>,
 ) -> Result<TokenStream> {
     Ok(structure.gen_impl(quote! {
-            #[automatically_derived]
-            gen impl #trait_path for @Self #where_clause {
-                fn #method(&self) -> #method_return_type {
-                    match *self {
-                        #body
-                    }
+        #[automatically_derived]
+        gen impl #trait_path for @Self #where_clause {
+            fn #method(&self) -> #method_return_type {
+                match *self {
+                    #body
                 }
             }
-        }))
+        }
+    }))
 }
-
 
 /// Renders implementation of a `trait_path` trait as a `method` that proxies
 /// call to it's variants.

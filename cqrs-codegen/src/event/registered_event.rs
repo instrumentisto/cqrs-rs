@@ -39,9 +39,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
     structure.add_bounds(synstructure::AddBounds::None);
 
     structure.bind_with(|_| synstructure::BindStyle::Move);
-    structure.binding_name(|_, _| {
-        syn::Ident::new("_", proc_macro2::Span::call_site())
-    });
+    structure.binding_name(|_, _| syn::Ident::new("_", proc_macro2::Span::call_site()));
 
     let body = structure.each(|bi| {
         let ty = &bi.ast().ty;
@@ -53,7 +51,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
     structure.add_trait_bounds(
         &syn::parse2(quote!(::cqrs::Event))?,
         &mut where_clause,
-        synstructure::AddBounds::Fields
+        synstructure::AddBounds::Fields,
     );
 
     if let Some(where_clause) = &mut where_clause {
@@ -73,7 +71,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
         quote!(type_id),
         quote!(::core::any::TypeId),
         body,
-        where_clause
+        where_clause,
     )
 }
 
