@@ -185,6 +185,7 @@ impl EventVersion {
     #[allow(unsafe_code)]
     #[inline]
     pub const unsafe fn new_unchecked(n: u8) -> Self {
+        // TODO: use safety guard for debug assertion
         Self(NonZeroU8::new_unchecked(n))
     }
 }

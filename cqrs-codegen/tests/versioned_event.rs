@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use cqrs::VersionedEvent as _;
 use cqrs_codegen::{Event, VersionedEvent};
 
@@ -54,14 +56,14 @@ fn derives_for_enum() {
 
     assert_eq!(
         *TestEvent::TestEventTuple(Default::default()).event_version(),
-        version1
+        version1,
     );
     assert_eq!(
         *TestEvent::TestEventStruct {
             event: Default::default()
         }
         .event_version(),
-        version2
+        version2,
     );
 }
 
@@ -106,24 +108,24 @@ fn derives_for_generic_enum() {
 
     assert_eq!(
         *TestEvent::TestEventTuple(Default::default()).event_version(),
-        version1
+        version1,
     );
     assert_eq!(
         *TestEvent::TestEventStruct {
             event: Default::default()
         }
         .event_version(),
-        version2
+        version2,
     );
     assert_eq!(
         *TestEvent::TestEventTupleGeneric(Default::default()).event_version(),
-        version3
+        version3,
     );
     assert_eq!(
         *TestEvent::TestEventStructGeneric {
             event: Default::default()
         }
         .event_version(),
-        version4
+        version4,
     );
 }

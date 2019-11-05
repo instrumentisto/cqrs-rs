@@ -1,4 +1,6 @@
-//! Codegen for [`cqrs::VersionedEvent`]
+//! Codegen for [`cqrs::VersionedEvent`].
+
+use std::num::NonZeroU8;
 
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -7,6 +9,7 @@ use synstructure::Structure;
 
 use crate::util;
 
+/// Name of the derived trait.
 const TRAIT_NAME: &str = "VersionedEvent";
 
 /// Implements [`crate::derive_versioned_event`] macro expansion.
@@ -20,8 +23,12 @@ fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
 
     let const_val = parse_event_version_from_nested_meta(&meta)?;
     let const_doc = format!("Version of [`{}`] event", input.ident);
-
-    let trait_path = quote!(::cqrs::VersionedEvent);
+    let additional = quote! {
+        #[doc = #const_doc]
+        #[allow(unsafe_code)]
+        pub const EVENT_VERSION: ::cqrs::EventVersion =
+            unsafe { ::cqrs::EventVersion::new_unchecked(#const_val) };
+    };
 
     let body = quote! {
         #[inline(always)]
@@ -30,14 +37,12 @@ fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
         }
     };
 
-    let optional = quote! {
-        #[doc = #const_doc]
-        #[allow(unsafe_code)]
-        pub const EVENT_VERSION: ::cqrs::EventVersion =
-            unsafe { ::cqrs::EventVersion::new_unchecked(#const_val) };
-    };
-
-    super::render_struct(&input, trait_path, body, Some(optional))
+    super::render_struct(
+        &input,
+        quote!(::cqrs::VersionedEvent),
+        body,
+        Some(additional),
+    )
 }
 
 /// Implements [`crate::derive_versioned_event`] macro expansion for enums
@@ -58,16 +63,16 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
 
 /// Parses version of [`cqrs::Event`] from `#[event(...)]` attribute.
 fn parse_event_version_from_nested_meta(meta: &util::Meta) -> Result<u8> {
-    super::parse_attr_from_nested_meta::<syn::LitInt>(
+    let lit: &syn::LitInt = super::parse_attr_from_nested_meta(
         meta,
         "version",
         "version = <non-zero unsigned integer>",
-    )
-        .and_then(|lit| Ok(lit.base10_parse::<std::num::NonZeroU8>()?.get()))
+    )?;
+    Ok(lit.base10_parse::<NonZeroU8>()?.get())
 }
 
 #[cfg(test)]
-mod test {
+mod spec {
     use super::*;
 
     #[test]

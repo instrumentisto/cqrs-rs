@@ -1,10 +1,8 @@
-//! Codegen for [`cqrs::Event`] and related (e.g., [`cqrs::VersionedEvent`], etc).
+//! Codegen for [`cqrs::Event`] and related traits
+//! (e.g. [`cqrs::VersionedEvent`], etc).
 
 mod event;
 mod versioned_event;
-
-pub(crate) use event::derive;
-pub(crate) use versioned_event::derive as versioned_derive;
 
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -13,31 +11,39 @@ use synstructure::Structure;
 
 use crate::util::{self, TryInto as _};
 
+pub(crate) use event::derive;
+pub(crate) use versioned_event::derive as versioned_derive;
+
+/// Name of the attribute, used for this family of derives.
 const ATTR_NAME: &str = "event";
+
+/// Name of the `#[event(...)]` attribute's arguments, used for this family
+/// of derives.
 const VALID_ATTR_ARGS: &[&str] = &["type", "version"];
 
-/// Renders implementation of trait `trait_path` with given `body` and
-/// optionally renders some arbitrary impl block code with given `optional`.
+/// Renders implementation of a `trait_path` trait with a given `body` and
+/// optionally renders some arbitrary `impl` block code with a given
+/// `additional_code`.
 fn render_struct(
     input: &syn::DeriveInput,
     trait_path: TokenStream,
     body: TokenStream,
-    optional: Option<TokenStream>,
+    additional_code: Option<TokenStream>,
 ) -> Result<TokenStream> {
     let type_name = &input.ident;
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
-    let optional = optional.map(|optional| {
+    let additional = additional_code.map(|code| {
         quote! {
             #[automatically_derived]
             impl#impl_generics #type_name#ty_generics #where_clause {
-                #optional
+                #code
             }
         }
     });
 
     Ok(quote! {
-        #optional
+        #additional
 
         #[automatically_derived]
         impl#impl_generics #trait_path for #type_name#ty_generics #where_clause {
@@ -60,18 +66,18 @@ fn assert_all_enum_variants_have_single_field(
             return Err(Error::new(
                 ast.ident.span(),
                 format!(
-                    "{} can only be derived for enums with variants that have exactly one field",
+                    "{} can only be derived for enums with variants \
+                     that have exactly one field",
                     trait_name
                 ),
             ));
         }
     }
-
     Ok(())
 }
 
-/// Renders implementation of trait with path `trait_path` as a `method`
-/// that proxies call to it's variants.
+/// Renders implementation of a `trait_path` trait as a `method` that proxies
+/// call to it's variants.
 ///
 /// Expects that all variants of `structure` contain exactly one field.
 /// Returns error otherwise.
@@ -112,19 +118,20 @@ fn render_enum_proxy_method_calls(
     }))
 }
 
-/// Parses required inner attribute from `#[event(...)]` outer attribute,
-/// converting it to type `T` (using [`crate::util::TryInto`]) if possible.
+/// Parses required inner attribute from an outer `#[event(...)]` attribute,
+/// converting it to a type `T` (using [`util::TryInto`]) if possible.
 fn parse_attr_from_nested_meta<'meta, T>(
     meta: &'meta util::Meta,
     attr_name: &str,
     expected_format: &str,
 ) -> Result<&'meta T>
-    where &'meta syn::Lit: util::TryInto<&'meta T>
+where
+    &'meta syn::Lit: util::TryInto<&'meta T>,
 {
-    parse_attr_from_nested_meta_impl(meta, attr_name, expected_format).and_then(|lit| {
-        let span = lit.span();
-        lit.try_into().ok_or_else(move || wrong_format(span, expected_format))
-    })
+    let lit = parse_attr_from_nested_meta_impl(meta, attr_name, expected_format)?;
+    let span = lit.span();
+    lit.try_into()
+        .ok_or_else(move || wrong_format(span, expected_format))
 }
 
 /// Parses required inner attribute from `#[event(...)]` outer attribute.
@@ -154,8 +161,8 @@ fn parse_attr_from_nested_meta_impl<'meta>(
             return Err(Error::new(
                 meta.span(),
                 format!(
-                    "Only one #[event({})] attribute is allowed",
-                    expected_format
+                    "Only one #[{}({})] attribute is allowed",
+                    ATTR_NAME, expected_format,
                 ),
             ));
         }
@@ -164,20 +171,24 @@ fn parse_attr_from_nested_meta_impl<'meta>(
     attr.ok_or_else(|| {
         Error::new(
             proc_macro2::Span::call_site(),
-            format!("Expected to have #[event({})] attribute", expected_format),
+            format!(
+                "Expected to have #[{}({})] attribute",
+                ATTR_NAME, expected_format,
+            ),
         )
     })
 }
 
 /// Constructs error message about wrong attribute format.
 fn wrong_format<S>(span: S, expected_format: &str) -> Error
-    where S: Spanned
+where
+    S: Spanned,
 {
     Error::new(
         span.span(),
         format!(
-            "Wrong attribute format; expected #[event({})]",
-            expected_format
+            "Wrong attribute format; expected #[{}({})]",
+            ATTR_NAME, expected_format,
         ),
     )
 }

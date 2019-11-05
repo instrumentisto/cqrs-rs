@@ -1,4 +1,4 @@
-//! Codegen for [`cqrs::Event`]
+//! Codegen for [`cqrs::Event`].
 
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -7,6 +7,7 @@ use synstructure::Structure;
 
 use crate::util;
 
+/// Name of the derived trait.
 const TRAIT_NAME: &str = "Event";
 
 /// Implements [`crate::derive_event`] macro expansion.
@@ -20,8 +21,10 @@ fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
 
     let const_val = parse_event_type_from_nested_meta(&meta)?;
     let const_doc = format!("Type name of [`{}`] event", input.ident);
-
-    let trait_path = quote!(::cqrs::Event);
+    let additional = quote! {
+        #[doc = #const_doc]
+        pub const EVENT_TYPE: ::cqrs::EventType = #const_val;
+    };
 
     let body = quote! {
         #[inline(always)]
@@ -30,12 +33,7 @@ fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
         }
     };
 
-    let optional = quote! {
-        #[doc = #const_doc]
-        pub const EVENT_TYPE: ::cqrs::EventType = #const_val;
-    };
-
-    super::render_struct(&input, trait_path, body, Some(optional))
+    super::render_struct(&input, quote!(::cqrs::Event), body, Some(additional))
 }
 
 /// Implements [`crate::derive_event`] macro expansion for enums
@@ -56,16 +54,12 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
 
 /// Parses type of [`cqrs::Event`] from `#[event(...)]` attribute.
 fn parse_event_type_from_nested_meta(meta: &util::Meta) -> Result<String> {
-    super::parse_attr_from_nested_meta::<syn::LitStr>(
-        meta,
-        "type",
-        "type = \"...\"",
-    )
-        .map(|lit| lit.value())
+    let lit: &syn::LitStr = super::parse_attr_from_nested_meta(meta, "type", "type = \"...\"")?;
+    Ok(lit.value())
 }
 
 #[cfg(test)]
-mod test {
+mod spec {
     use super::*;
 
     #[test]
