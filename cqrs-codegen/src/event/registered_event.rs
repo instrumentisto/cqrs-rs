@@ -76,7 +76,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
 }
 
 #[cfg(test)]
-mod test {
+mod spec {
     use super::*;
 
     #[test]
