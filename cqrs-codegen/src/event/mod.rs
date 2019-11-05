@@ -78,33 +78,6 @@ fn assert_all_enum_variants_have_single_field(
     Ok(())
 }
 
-/// Renders implementation of `trait_path` trait with given `where_clause`
-/// as a `method` with given `body`.
-///
-/// Expects that all variants of `structure` contain exactly one field.
-/// Returns error otherwise.
-///
-/// `trait_name` is only used to generate error message.
-pub fn render_enum(
-    structure: &mut Structure,
-    trait_path: TokenStream,
-    method: TokenStream,
-    method_return_type: TokenStream,
-    body: TokenStream,
-    where_clause: Option<syn::WhereClause>,
-) -> Result<TokenStream> {
-    Ok(structure.gen_impl(quote! {
-        #[automatically_derived]
-        gen impl #trait_path for @Self #where_clause {
-            fn #method(&self) -> #method_return_type {
-                match *self {
-                    #body
-                }
-            }
-        }
-    }))
-}
-
 /// Renders implementation of a `trait_path` trait as a `method` that proxies
 /// call to it's variants.
 ///
