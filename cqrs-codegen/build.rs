@@ -41,13 +41,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     if watch {
         if impl_exists {
+            // have to explicitly exclude 'codegen.wasm', cause otherwise each
+            // rebuild triggers 'rerun-if-changed' and forces rebuild on next
+            // run (which triggers 'rerun-if-changed'...)
             rerun_if_changed_recursive_with_exceptions("./src", &["codegen.wasm"])?;
-            // rerun_if_changed("./Cargo.lock");
-            // rerun_if_changed("./Cargo.toml");
-
             rerun_if_changed_recursive("./impl/src")?;
-            // rerun_if_changed("./impl/Cargo.lock");
-            // rerun_if_changed("./impl/Cargo.toml");
         } else {
             println!(
                 "cargo:warning='./.watch-cqrs-codegen-impl' file exists, but \
@@ -62,6 +60,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         env::set_current_dir("./impl")?;
 
         fs::copy("./Cargo.toml", "./Cargo.toml~")?;
+
         writeln!(OpenOptions::new().append(true).open("./Cargo.toml")?, "[workspace]")?;
 
         let status = process::Command::new(env::var("CARGO")?)
@@ -79,7 +78,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
 
         fs::copy("./Cargo.toml~", "./Cargo.toml")?;
-        drop(fs::remove_file("./Cargo.toml~")); // result is explicitly ignored
+
+        // removing ./Cargo.toml~ is not critical, so result is explicitly ignored
+        drop(fs::remove_file("./Cargo.toml~"));
 
         env::set_current_dir(root)?;
 
