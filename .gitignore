@@ -3,4 +3,3 @@ target/
 *.g.*
 Cargo.lock
 *.new
-cqrs-codegen/.watch-cqrs-codegen-impl

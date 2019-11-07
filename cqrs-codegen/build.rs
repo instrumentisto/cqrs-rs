@@ -1,8 +1,8 @@
 use std::{
     env,
     error::Error,
-    io::Write as _,
     fs::{self, OpenOptions},
+    io::Write as _,
     path::Path,
     process,
 };
@@ -13,13 +13,13 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     if watt.is_ok() && no_watt.is_ok() {
         panic!(
-            "Invalid configuration: both 'watt' and 'no-watt' features specified; \
-            exactly one of the two features have to be specified"
+            "Both 'watt' and 'no-watt' features specified; \
+             exactly one of the two features have to be specified",
         );
     } else if watt.is_err() && no_watt.is_err() {
         panic!(
-            "Invalid configuration: neither 'watt', nor 'no-watt' feature specified; \
-            exactly one of the two features have to be specified"
+            "Neither 'watt', nor 'no-watt' feature specified; \
+             exactly one of the two features have to be specified",
         );
     }
 
@@ -33,7 +33,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     if !codegen_wasm_exists && !impl_exists {
         panic!(
             "Neither './src/codegen.wasm' file, nor './impl/' directory exist, \
-            so it's impossible to build cqrs-codegen with 'watt' feature"
+             so it's impossible to build cqrs-codegen with 'watt' feature",
         );
     }
 
@@ -41,15 +41,16 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     if watch {
         if impl_exists {
-            // have to explicitly exclude 'codegen.wasm', cause otherwise each
+            // Have to explicitly exclude 'codegen.wasm', cause otherwise each
             // rebuild triggers 'rerun-if-changed' and forces rebuild on next
-            // run (which triggers 'rerun-if-changed'...)
+            // run (which triggers 'rerun-if-changed'...).
             rerun_if_changed_recursive_with_exceptions("./src", &["codegen.wasm"])?;
             rerun_if_changed_recursive("./impl/src")?;
         } else {
             println!(
-                "cargo:warning='./.watch-cqrs-codegen-impl' file exists, but \
-                './impl/' directory doesn't; './src/codegen.wasm' won't be rebuilt"
+                "cargo:warning='./.watch-cqrs-codegen-impl' file exists, \
+                 but './impl/' directory doesn't; \
+                 './src/codegen.wasm' won't be rebuilt",
             );
         }
     }
@@ -59,28 +60,38 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         env::set_current_dir("./impl")?;
 
-        fs::copy("./Cargo.toml", "./Cargo.toml~")?;
+        fs::copy("./Cargo.toml", "./Cargo.toml.orig")?;
 
-        writeln!(OpenOptions::new().append(true).open("./Cargo.toml")?, "[workspace]")?;
+        writeln!(
+            OpenOptions::new().append(true).open("./Cargo.toml")?,
+            "[workspace]",
+        )?;
 
         let status = process::Command::new(env::var("CARGO")?)
-            .args(vec![
+            .args(&[
                 "build",
                 "--release",
-                "--target", "wasm32-unknown-unknown",
-                "--features", "watt",
-                "--target-dir", "target",
+                "--target",
+                "wasm32-unknown-unknown",
+                "--features",
+                "watt",
+                "--target-dir",
+                "target",
             ])
             .status()?;
 
         if !status.success() {
-            panic!("cargo-build for cqrs-codegen-impl returned non-zero status code");
+            panic!(
+                "cargo-build for cqrs-codegen-impl returned \
+                 non-zero status code",
+            );
         }
 
-        fs::copy("./Cargo.toml~", "./Cargo.toml")?;
+        fs::copy("./Cargo.toml.orig", "./Cargo.toml")?;
 
-        // removing ./Cargo.toml~ is not critical, so result is explicitly ignored
-        drop(fs::remove_file("./Cargo.toml~"));
+        // Removing ./Cargo.toml.orig is not critical,
+        // so result is explicitly ignored.
+        drop(fs::remove_file("./Cargo.toml.orig"));
 
         env::set_current_dir(root)?;
 
@@ -98,21 +109,26 @@ fn rerun_if_changed(path: &str) {
 }
 
 fn rerun_if_changed_recursive<P>(path: P) -> Result<(), Box<dyn Error>>
-where P: AsRef<Path>
+where
+    P: AsRef<Path>,
 {
     rerun_if_changed_recursive_with_exceptions(path, &[])
 }
 
 fn rerun_if_changed_recursive_with_exceptions<P>(
     path: P,
-    exceptions: &[&str]
+    exceptions: &[&str],
 ) -> Result<(), Box<dyn Error>>
-where P: AsRef<Path>
+where
+    P: AsRef<Path>,
 {
     for path in fs::read_dir(path)? {
         let path = path?;
 
-        if exceptions.iter().any(|&exception| path.file_name() == exception) {
+        if exceptions
+            .iter()
+            .any(|&exception| path.file_name() == exception)
+        {
             continue;
         }
 

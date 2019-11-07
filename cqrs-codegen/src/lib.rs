@@ -3,6 +3,7 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 
 #[cfg(all(not(feature = "watt"), feature = "no-watt"))]
+/// Imports proc macro from implementation crate as is.
 macro_rules! import {
     ($input:expr, $fn:ident) => {
         cqrs_codegen_impl::expand(syn::parse($input), cqrs_codegen_impl::$fn)
@@ -10,6 +11,7 @@ macro_rules! import {
 }
 
 #[cfg(all(feature = "watt", not(feature = "no-watt")))]
+/// Imports proc macro from implementation crate via WASM ABI.
 macro_rules! import {
     ($input:expr, $fn:ident) => {
         wasm::MACRO.proc_macro(stringify!($fn), $input)
@@ -18,8 +20,11 @@ macro_rules! import {
 
 #[cfg(all(feature = "watt", not(feature = "no-watt")))]
 mod wasm {
-    pub static MACRO: watt::WasmMacro = watt::WasmMacro::new(WASM);
+    /// Generated WASM of implementation crate.
     static WASM: &[u8] = include_bytes!("codegen.wasm");
+
+    /// Callable interface of the generated [`WASM`].
+    pub static MACRO: watt::WasmMacro = watt::WasmMacro::new(WASM);
 }
 
 /// Derives [`cqrs::Event`] implementation for structs and enums.

@@ -1,7 +1,10 @@
 mod event;
 mod util;
 
+use proc_macro2::TokenStream;
+
 #[cfg(not(feature = "watt"))]
+/// Re-exports proc macro `$fn` as is.
 macro_rules! export {
     ($fn:ident) => {
         pub use event::$fn;
@@ -9,27 +12,27 @@ macro_rules! export {
 }
 
 #[cfg(feature = "watt")]
+/// Re-exports proc macro `$fn` via WASM ABI.
 macro_rules! export {
     ($fn:ident) => {
         #[no_mangle]
-        pub extern "C" fn $fn(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+        pub extern "C" fn $fn(input: TokenStream) -> TokenStream {
             expand(syn::parse2(input), event::$fn)
         }
-    }
+    };
 }
 
-pub fn expand<TS>(
+/// Performs expansion of a given proc macro implementation.
+pub fn expand<TS: From<TokenStream>>(
     input: syn::Result<syn::DeriveInput>,
-    macro_impl: fn(syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream>,
-) -> TS
-where TS: From<proc_macro2::TokenStream>
-{
+    macro_impl: fn(syn::DeriveInput) -> syn::Result<TokenStream>,
+) -> TS {
     match input.and_then(|input| macro_impl(input)) {
         Ok(res) => res.into(),
         Err(err) => err.to_compile_error().into(),
     }
 }
 
-export! {event_derive}
-export! {registered_event_derive}
-export! {versioned_event_derive}
+export!(event_derive);
+export!(registered_event_derive);
+export!(versioned_event_derive);
