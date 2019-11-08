@@ -30,6 +30,7 @@ where
 
 /// Checks that no attribute with a given `attr_name` exists.
 /// Returns error if found.
+#[allow(dead_code)]
 pub(crate) fn assert_attr_does_not_exist(attrs: &[syn::Attribute], attr_name: &str) -> Result<()> {
     let meta = find_nested_meta_impl(attrs, attr_name)?;
     if let Some((span, _)) = meta {

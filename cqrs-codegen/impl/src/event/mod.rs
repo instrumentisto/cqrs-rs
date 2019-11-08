@@ -1,6 +1,7 @@
 //! Codegen for [`cqrs::Event`] and related traits
 //! (e.g. [`cqrs::VersionedEvent`], etc).
 
+mod aggregate_event;
 mod event;
 mod registered_event;
 mod versioned_event;
@@ -12,6 +13,7 @@ use synstructure::Structure;
 
 use crate::util::{self, TryInto as _};
 
+pub use aggregate_event::derive as aggregate_event_derive;
 pub use event::derive as event_derive;
 pub use registered_event::derive as registered_event_derive;
 pub use versioned_event::derive as versioned_event_derive;
@@ -21,7 +23,7 @@ const ATTR_NAME: &str = "event";
 
 /// Name of the `#[event(...)]` attribute's arguments, used for this family
 /// of derives.
-const VALID_ATTR_ARGS: &[&str] = &["type", "version"];
+const VALID_ATTR_ARGS: &[&str] = &["aggregate", "type", "version"];
 
 /// Renders implementation of a `trait_path` trait with a given `body` and
 /// optionally renders some arbitrary `impl` block code with a given
