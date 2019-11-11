@@ -45,6 +45,41 @@ pub(crate) fn assert_attr_does_not_exist(attrs: &[syn::Attribute], attr_name: &s
     Ok(())
 }
 
+/// Checks that only valid inner attributes `valid_attr_args` used
+/// for attribute `attr_name` if it exists.
+pub(crate) fn assert_valid_attr_args_used(
+    attrs: &[syn::Attribute],
+    attr_name: &str,
+    valid_attr_args: &[&str],
+) -> Result<()> {
+    let meta = find_nested_meta(attrs, attr_name)?;
+
+    let meta = match meta {
+        Some(meta) => meta,
+        None => return Ok(()),
+    };
+
+    for meta in meta {
+        let meta = match meta {
+            syn::NestedMeta::Meta(meta) => meta,
+            _ => return Err(Error::new(
+                meta.span(),
+                "Wrong attribute format",
+            )),
+        };
+
+        if !valid_attr_args.iter().any(|attr| meta.path().is_ident(attr)) {
+            return Err(Error::new(
+                meta.span(),
+                "Invalid attribute",
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+
 /// Finds attribute named with a given `attr_name` and returns its inner
 /// parameters.
 ///

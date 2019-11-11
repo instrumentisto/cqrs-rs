@@ -21,9 +21,13 @@ pub use versioned_event::derive as versioned_event_derive;
 /// Name of the attribute, used for this family of derives.
 const ATTR_NAME: &str = "event";
 
-/// Name of the `#[event(...)]` attribute's arguments, used for this family
-/// of derives.
-const VALID_ATTR_ARGS: &[&str] = &["aggregate", "type", "version"];
+/// Name of the `#[event(...)]` attribute's arguments, used on structs
+/// for this family of derives.
+const VALID_STRUCT_ATTR_ARGS: &[&str] = &["type", "version"];
+
+/// Name of the `#[event(...)]` attribute's arguments, used on enums
+/// for this family of derives.
+const VALID_ENUM_ATTR_ARGS: &[&str] = &["aggregate"];
 
 /// Renders implementation of a `trait_path` trait with a given `body` and
 /// optionally renders some arbitrary `impl` block code with a given
@@ -128,12 +132,20 @@ fn parse_attr_from_nested_meta<'meta, T>(
     meta: &'meta util::Meta,
     attr_name: &str,
     expected_format: &str,
+    valid_attr_args: &[&str],
 ) -> Result<&'meta T>
 where
     &'meta syn::Lit: util::TryInto<&'meta T>,
 {
-    let lit = parse_attr_from_nested_meta_impl(meta, attr_name, expected_format)?;
+    let lit = parse_attr_from_nested_meta_impl(
+        meta,
+        attr_name,
+        expected_format,
+        valid_attr_args,
+    )?;
+
     let span = lit.span();
+
     lit.try_into()
         .ok_or_else(move || wrong_format(span, expected_format))
 }
@@ -143,6 +155,7 @@ fn parse_attr_from_nested_meta_impl<'meta>(
     meta: &'meta util::Meta,
     attr_name: &str,
     expected_format: &str,
+    valid_attr_args: &[&str],
 ) -> Result<&'meta syn::Lit> {
     let mut attr = None;
 
@@ -157,7 +170,7 @@ fn parse_attr_from_nested_meta_impl<'meta>(
             _ => return Err(wrong_format(meta, expected_format)),
         };
 
-        if !VALID_ATTR_ARGS.iter().any(|attr| meta.path.is_ident(attr)) {
+        if !valid_attr_args.iter().any(|attr| meta.path.is_ident(attr)) {
             return Err(Error::new(meta.span(), "Invalid attribute"));
         }
 

@@ -119,8 +119,13 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
 
 /// Parses aggregate of [`cqrs::AggregateEvent`] from `#[event(...)]` attribute.
 fn parse_event_aggregate_from_nested_meta(meta: &util::Meta) -> Result<String> {
-    let lit: &syn::LitStr =
-        super::parse_attr_from_nested_meta(meta, "aggregate", "aggregate = \"...\"")?;
+    let lit: &syn::LitStr = super::parse_attr_from_nested_meta(
+        meta,
+        "aggregate",
+        "aggregate = \"...\"",
+        super::VALID_ENUM_ATTR_ARGS,
+    )?;
+
     Ok(lit.value())
 }
 
