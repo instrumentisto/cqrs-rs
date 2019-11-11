@@ -39,26 +39,25 @@ mod wasm {
 /// for an enum when all variants of such enum have exactly one field
 /// (variant can be either a tuple-variant or a struct-variant).
 ///
-/// Each field is expected to have defined associated constant `EVENT_TYPE`
-/// of [`cqrs::TypeID`] type. [`cqrs::Event`] derive macro generates such
-/// constant as part of generated implementation.
+/// Each field is expected to have a defined associated constant `EVENT_TYPE`.
+/// [`cqrs::Event`] derive macro generates such constant automatically.
 ///
 /// Note, that generic enums deriving [`cqrs::AggregateEvent`] cannot have
 /// variants with field of type-parameter type (e.g., `T`) as it's impossible
 /// for type-parameter to have associated constants. However, fields of
-/// generic types dependent on type-parameters (e.g., `Event<T>`) are fine.
+/// generic types that dependent on type-parameters (e.g., `Event<T>`) are fine.
 ///
 /// # Examples
 /// ```
-/// # use cqrs_codegen::{Event, AggregateEvent};
+/// # use cqrs_codegen::{AggregateEvent, Event};
 /// #
 /// # #[derive(Default)]
-/// # struct Aggregate;
+/// # struct User(i32);
 /// #
-/// # impl cqrs::Aggregate for Aggregate {
+/// # impl cqrs::Aggregate for User {
 /// #   type Id = i32;
-/// #   fn aggregate_type(&self) -> &'static str { "aggregate" }
-/// #   fn id(&self) -> &Self::Id { &0 }
+/// #   fn aggregate_type(&self) -> &'static str { "user" }
+/// #   fn id(&self) -> &Self::Id { &self.0 }
 /// # }
 /// #
 /// #[derive(Event)]
@@ -69,8 +68,8 @@ mod wasm {
 /// #[event(type = "user.removed")]
 /// struct UserRemoved;
 ///
-/// #[derive(Event, AggregateEvent)]
-/// #[event(aggregate = "Aggregate")]
+/// #[derive(AggregateEvent, Event)]
+/// #[event(aggregate = "User")]
 /// enum UserEvents {
 ///     UserCreated(UserCreated),
 ///     UserRemoved(UserRemoved),

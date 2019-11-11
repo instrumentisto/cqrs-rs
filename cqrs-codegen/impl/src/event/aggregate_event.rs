@@ -39,8 +39,6 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
     let structure = Structure::try_new(&input)?;
     super::assert_all_enum_variants_have_single_field(&structure, TRAIT_NAME)?;
 
-    let mut event_types = Vec::new();
-
     let type_params: HashSet<_> = input
         .generics
         .params
@@ -57,14 +55,17 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
         .map(|variant| variant.ast().fields.iter())
         .flatten();
 
+    let mut event_types = Vec::new();
     for field in iter {
         let mut path = match &field.ty {
             syn::Type::Path(path) => path.path.clone(),
-            _ => return Err(Error::new(
-                field.span(),
-                "AggregateEvent can only be derived for enums \
-                with variants containing owned scalar data",
-            )),
+            _ => {
+                return Err(Error::new(
+                    field.span(),
+                    "AggregateEvent can only be derived for enums \
+                     with variants containing owned scalar data",
+                ))
+            }
         };
 
         // type-path cannot ever be empty, unless there is an error in syn
@@ -73,9 +74,9 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
         if type_params.contains(&first_segment.ident) {
             return Err(Error::new(
                 first_segment.ident.span(),
-                "Type parameters are not allowed here, as they cannot have
-                associated constants (but generic types dependent on generic type
-                parameters, e.g., 'Event<T>', are fine)",
+                "Type parameters are not allowed here, as they cannot have \
+                 associated constants (but generic types dependent on generic \
+                 type parameters, e.g., 'Event<T>', are fine)",
             ));
         }
 
@@ -92,7 +93,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
     }
 
     let const_len = event_types.len();
-    let const_doc = format!("Type names of [`{}`] aggregate event", input.ident);
+    let const_doc = format!("Type names of [`{}`] aggregate events.", input.ident);
 
     let type_name = &input.ident;
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
@@ -118,7 +119,8 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
 
 /// Parses aggregate of [`cqrs::AggregateEvent`] from `#[event(...)]` attribute.
 fn parse_event_aggregate_from_nested_meta(meta: &util::Meta) -> Result<String> {
-    let lit: &syn::LitStr = super::parse_attr_from_nested_meta(meta, "aggregate", "aggregate = \"...\"")?;
+    let lit: &syn::LitStr =
+        super::parse_attr_from_nested_meta(meta, "aggregate", "aggregate = \"...\"")?;
     Ok(lit.value())
 }
 
@@ -140,7 +142,7 @@ mod spec {
         let output = quote! {
             #[automatically_derived]
             impl Event {
-                #[doc = "Type names of [`Event`] aggregate event"]
+                #[doc = "Type names of [`Event`] aggregate events."]
                 pub const EVENT_TYPES: [::cqrs::EventType; 3usize] = [
                     MyEvent::EVENT_TYPE, HisEvent::EVENT_TYPE, HerEvent::EVENT_TYPE
                 ];
