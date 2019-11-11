@@ -48,11 +48,7 @@ fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
 /// Implements [`crate::derive_versioned_event`] macro expansion for enums
 /// via [`synstructure`].
 fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
-    util::assert_valid_attr_args_used(
-        &input.attrs,
-        super::ATTR_NAME,
-        super::VALID_ENUM_ATTR_ARGS,
-    )?;
+    util::assert_valid_attr_args_used(&input.attrs, super::ATTR_NAME, super::VALID_ENUM_ATTR_ARGS)?;
 
     let mut structure = Structure::try_new(&input)?;
 
@@ -73,7 +69,6 @@ fn parse_event_version_from_nested_meta(meta: &util::Meta) -> Result<u8> {
         "version = <non-zero unsigned integer>",
         super::VALID_STRUCT_ATTR_ARGS,
     )?;
-
     Ok(lit.base10_parse::<NonZeroU8>()?.get())
 }
 

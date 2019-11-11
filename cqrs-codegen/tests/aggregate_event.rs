@@ -48,11 +48,11 @@ fn derives_for_enum() {
 #[test]
 fn derives_for_generic_enum() {
     #[derive(Default, Event)]
-    #[event(type = "test.event.1")]
+    #[event(type = "test.event", version = 1)]
     struct TestEvent1;
 
     #[derive(Default, Event)]
-    #[event(type = "test.event.2")]
+    #[event(type = "test.event", version = 2)]
     struct TestEvent2;
 
     #[derive(Default, Event)]
@@ -69,7 +69,7 @@ fn derives_for_generic_enum() {
         data: Data,
     }
 
-    #[derive(Event, AggregateEvent)]
+    #[derive(AggregateEvent, Event)]
     #[event(aggregate = "Aggregate")]
     enum TestEventGeneric<ID, Data> {
         TestEventTuple(TestEvent1),

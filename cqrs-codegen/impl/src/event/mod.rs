@@ -21,11 +21,11 @@ pub use versioned_event::derive as versioned_event_derive;
 /// Name of the attribute, used for this family of derives.
 const ATTR_NAME: &str = "event";
 
-/// Name of the `#[event(...)]` attribute's arguments, used on structs
+/// Names of the `#[event(...)]` attribute's arguments, used on structs
 /// for this family of derives.
 const VALID_STRUCT_ATTR_ARGS: &[&str] = &["type", "version"];
 
-/// Name of the `#[event(...)]` attribute's arguments, used on enums
+/// Names of the `#[event(...)]` attribute's arguments, used on enums
 /// for this family of derives.
 const VALID_ENUM_ATTR_ARGS: &[&str] = &["aggregate"];
 
@@ -137,15 +137,8 @@ fn parse_attr_from_nested_meta<'meta, T>(
 where
     &'meta syn::Lit: util::TryInto<&'meta T>,
 {
-    let lit = parse_attr_from_nested_meta_impl(
-        meta,
-        attr_name,
-        expected_format,
-        valid_attr_args,
-    )?;
-
+    let lit = parse_attr_from_nested_meta_impl(meta, attr_name, expected_format, valid_attr_args)?;
     let span = lit.span();
-
     lit.try_into()
         .ok_or_else(move || wrong_format(span, expected_format))
 }
