@@ -33,7 +33,7 @@ pub fn expand<TS: From<TokenStream>>(
     }
 }
 
-export! {aggregate_event_derive}
+export!(aggregate_event_derive);
 export!(event_derive);
 export!(registered_event_derive);
 export!(versioned_event_derive);
