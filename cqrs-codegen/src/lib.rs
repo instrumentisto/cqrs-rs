@@ -32,7 +32,7 @@ mod wasm {
 /// The enum is treated as a sum-type representing a set of possible events.
 ///
 /// Specifying `#[event(aggregate = "...")]` attribute is __mandatory__
-/// (and only single such attribute allowed per struct). The attribute is
+/// (and only single such attribute allowed per enum). The attribute is
 /// treated as a type of the aggregate with which event is associated.
 ///
 /// In practice this means, that [`cqrs::AggregateEvent`] can only be derived
