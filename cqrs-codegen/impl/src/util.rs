@@ -60,6 +60,54 @@ pub(crate) fn render_struct(
     })
 }
 
+/// Renders field identificator for named or unnamed struct.
+pub(crate) fn render_field_ident(index: usize, field: &syn::Field) -> TokenStream {
+    match &field.ident {
+        Some(ident) => quote!(#ident),
+        None => {
+            let index = syn::Index::from(index);
+            quote!(#index)
+        }
+    }
+}
+
+/// Finds field marked with `flag` attribute.
+pub(crate) fn find_field_with_flag<'field>(
+    fields: &'field syn::Fields,
+    attr: &str,
+    flag: &str,
+    valid_args: &[&str],
+) -> Result<Option<(usize, &'field syn::Field)>> {
+    let mut result = None;
+
+    for (index, field) in fields.iter().enumerate() {
+        let meta = find_nested_meta(&field.attrs, attr)?;
+
+        let meta = match meta {
+            Some(meta) => meta,
+            None => continue,
+        };
+
+        let found = parse_flag(&meta, flag, valid_args, attr)?;
+
+        if found {
+            let span = field.span();
+            if result.replace((index, field)).is_some() {
+                return Err(Error::new(
+                    span,
+                    format!(
+                        "Multiple fields marked with '#[{0}({1})]' attribute; \
+                         only single '#[{0}({1})]' attribute allowed per struct",
+                        attr, flag,
+                    ),
+                ));
+            }
+        }
+    }
+
+    Ok(result)
+}
+
 /// Checks that no attribute with a given `attr_name` exists.
 /// Returns error if found.
 #[allow(dead_code)]
