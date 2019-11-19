@@ -1,8 +1,8 @@
 //! Common crate utils used for codegen.
 
 use proc_macro2::TokenStream;
-use syn::{punctuated::Punctuated, spanned::Spanned, Error, Result};
 use quote::quote;
+use syn::{punctuated::Punctuated, spanned::Spanned, Error, Result};
 
 /// Shorten alias for attribute's meta.
 pub(crate) type Meta = Punctuated<syn::NestedMeta, syn::Token![,]>;
@@ -29,8 +29,8 @@ where
     }
 }
 
-/// Renders implementation of a `trait_path` trait with a given `body` and
-/// optionally renders some arbitrary `impl` block code with a given
+/// Renders implementation of a `trait_path` trait for a struct with a given
+/// `body`, and optionally renders some arbitrary `impl` block code with a given
 /// `additional_code`.
 pub(crate) fn render_struct(
     input: &syn::DeriveInput,
@@ -77,7 +77,7 @@ pub(crate) fn assert_attr_does_not_exist(attrs: &[syn::Attribute], attr_name: &s
     Ok(())
 }
 
-/// Checks that only given inner arguments `attr_args` are used
+/// Checks that only given inner arguments `valid_args` are used
 /// inside `attr_name` attribute. Passes if attribute doesn't exist at all.
 pub(crate) fn assert_valid_attr_args_used(
     attrs: &[syn::Attribute],
@@ -96,10 +96,7 @@ pub(crate) fn assert_valid_attr_args_used(
         };
 
         if !valid_args.iter().any(|arg| meta.path().is_ident(arg)) {
-            return Err(Error::new(
-                meta.span(),
-                "Invalid attribute",
-            ));
+            return Err(Error::new(meta.span(), "Invalid attribute"));
         }
     }
 
@@ -175,33 +172,23 @@ fn find_nested_meta_impl(
     Ok(nested_meta)
 }
 
-/// Parses specified inner attribute `arg` from `#[<attr>(...)]` outer attribute,
-/// as a flag. Returns `true` if attribute is present and `false` otherwise.
-pub(crate) fn parse_flag(
-    meta: &Meta,
-    arg: &str,
-    valid_args: &[&str],
-    attr: &str,
-) -> Result<bool> {
-    let meta = find_arg(
-        meta,
-        arg,
-        valid_args,
-        attr,
-        "",
-    )?;
+/// Parses specified inner argument `arg` from the given `#[<attr>(...)]` outer
+/// attribute, as a flag.
+/// Returns `true` if attribute is present, and `false` otherwise.
+pub(crate) fn parse_flag(meta: &Meta, arg: &str, valid_args: &[&str], attr: &str) -> Result<bool> {
+    let meta = find_arg(meta, arg, valid_args, attr, "")?;
 
     let flag = match meta {
         None => false,
         Some(syn::Meta::Path(_)) => true,
         _ => return Err(wrong_format(meta, attr, arg, "")),
     };
-
     Ok(flag)
 }
 
-/// Parses specified inner attribute `arg` from `#[<attr>(...)]` outer attribute,
-/// converting it to a type `T` (using [`util::TryInto`]) if possible.
+/// Parses specified inner argument `arg` from the given `#[<attr>(...)]` outer
+/// attribute, converting it to a type `T` (using [`util::TryInto`])
+/// if possible.
 pub(crate) fn parse_lit<'meta, T>(
     meta: &'meta Meta,
     arg: &str,
@@ -212,21 +199,12 @@ pub(crate) fn parse_lit<'meta, T>(
 where
     &'meta syn::Lit: TryInto<&'meta T>,
 {
-    let meta = find_arg(
-        meta,
-        arg,
-        valid_args,
-        attr,
-        fmt,
-    )?;
+    let meta = find_arg(meta, arg, valid_args, attr, fmt)?;
 
     let meta = meta.ok_or_else(|| {
         Error::new(
             proc_macro2::Span::call_site(),
-            format!(
-                "Expected to have #[{}({}{})] attribute",
-                attr, arg, fmt,
-            ),
+            format!("Expected to have #[{}({}{})] attribute", attr, arg, fmt,),
         )
     })?;
 
@@ -234,14 +212,12 @@ where
         syn::Meta::NameValue(meta) => &meta.lit,
         _ => return Err(wrong_format(meta, attr, arg, fmt)),
     };
-
     let span = lit.span();
-
     lit.try_into()
         .ok_or_else(move || wrong_format(span, attr, arg, fmt))
 }
 
-/// Finds specified inner attribute `arg` from `#[<attr>(...)]` outer attribute.
+/// Finds specified inner argument `arg` from `#[<attr>(...)]` outer attribute.
 fn find_arg<'meta>(
     meta: &'meta Meta,
     arg: &str,
@@ -264,10 +240,7 @@ fn find_arg<'meta>(
         if meta.path().is_ident(arg) && result.replace(meta).is_some() {
             return Err(Error::new(
                 meta.span(),
-                format!(
-                    "Only one #[{}({}{})] attribute is allowed",
-                    attr, arg, fmt,
-                ),
+                format!("Only one #[{}({}{})] attribute is allowed", attr, arg, fmt,),
             ));
         }
     }

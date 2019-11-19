@@ -68,7 +68,10 @@ fn derives_for_generic_struct_with_inferred_id_field() {
     }
 
     assert_eq!(TestAggregate::<i32>::AGGREGATE_TYPE, "test.aggregate");
-    assert_eq!(TestAggregate::<i32>::default().aggregate_type(), "test.aggregate");
+    assert_eq!(
+        TestAggregate::<i32>::default().aggregate_type(),
+        "test.aggregate"
+    );
     assert_eq!(*TestAggregate::<i32>::default().id(), 0);
 }
 
@@ -83,7 +86,10 @@ fn derives_for_generic_struct_with_explicit_id_field() {
     }
 
     assert_eq!(TestAggregate::<i32>::AGGREGATE_TYPE, "test.aggregate");
-    assert_eq!(TestAggregate::<i32>::default().aggregate_type(), "test.aggregate");
+    assert_eq!(
+        TestAggregate::<i32>::default().aggregate_type(),
+        "test.aggregate"
+    );
     assert_eq!(*TestAggregate::<i32>::default().id(), 0);
 }
 
@@ -98,7 +104,10 @@ fn derives_for_generic_struct_with_redundantly_explicit_id_field() {
     }
 
     assert_eq!(TestAggregate::<i32>::AGGREGATE_TYPE, "test.aggregate");
-    assert_eq!(TestAggregate::<i32>::default().aggregate_type(), "test.aggregate");
+    assert_eq!(
+        TestAggregate::<i32>::default().aggregate_type(),
+        "test.aggregate"
+    );
     assert_eq!(*TestAggregate::<i32>::default().id(), 0);
 }
 
@@ -109,6 +118,9 @@ fn derives_for_generic_tuple_struct_with_explicit_id_field() {
     struct TestAggregate<T: Default>(#[aggregate(id)] T, T);
 
     assert_eq!(TestAggregate::<i32>::AGGREGATE_TYPE, "test.aggregate");
-    assert_eq!(TestAggregate::<i32>::default().aggregate_type(), "test.aggregate");
+    assert_eq!(
+        TestAggregate::<i32>::default().aggregate_type(),
+        "test.aggregate"
+    );
     assert_eq!(*TestAggregate::<i32>::default().id(), 0);
 }

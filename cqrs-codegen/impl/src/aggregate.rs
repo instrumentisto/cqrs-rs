@@ -33,7 +33,7 @@ fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
         _ => unreachable!(),
     };
 
-    let (id_type, id_field) = get_id(&data.fields)?;
+    let (id_type, id_field) = get_id_field(&data.fields)?;
 
     let body = quote! {
         type Id = #id_type;
@@ -49,12 +49,7 @@ fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
         }
     };
 
-    util::render_struct(
-        &input,
-        quote!(::cqrs::Aggregate),
-        body,
-        Some(additional),
-    )
+    util::render_struct(&input, quote!(::cqrs::Aggregate), body, Some(additional))
 }
 
 /// Reports error if [`crate::aggregate_derive`] macro applied to enums.
@@ -70,19 +65,14 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
 
 /// Parses type of [`cqrs::Aggregate`] from `#[aggregate(...)]` attribute.
 fn parse_aggregate_type(meta: &util::Meta) -> Result<String> {
-    let lit: &syn::LitStr = util::parse_lit(
-        meta,
-        "type",
-        &["type"],
-        ATTR_NAME,
-        "= \"...\"",
-    )?;
+    let lit: &syn::LitStr = util::parse_lit(meta, "type", &["type"], ATTR_NAME, "= \"...\"")?;
 
     Ok(lit.value())
 }
 
-/// Infers-or-finds-via-attribute an `id` field of the aggregate.
-fn get_id(fields: &syn::Fields) -> Result<(&syn::Type, TokenStream)> {
+/// Infers or finds via `#[aggregate(id)]` attribute an `id` field
+/// of this aggregate.
+fn get_id_field(fields: &syn::Fields) -> Result<(&syn::Type, TokenStream)> {
     let mut id = None;
 
     for (index, field) in fields.iter().enumerate() {
@@ -93,62 +83,44 @@ fn get_id(fields: &syn::Fields) -> Result<(&syn::Type, TokenStream)> {
             None => continue,
         };
 
-        let explicit = util::parse_flag(
-            &meta,
-            "id",
-            &["id"],
-            ATTR_NAME,
-        )?;
-
-        if explicit {
+        if util::parse_flag(&meta, "id", &["id"], ATTR_NAME)? {
             let span = field.span();
             if id.replace((index, field)).is_some() {
                 return Err(Error::new(
                     span,
                     "Multiple fields marked with '#[aggregate(id)]' attribute; \
-                    only single '#[aggregate(id)]' attribute allowed per struct",
+                     only single '#[aggregate(id)]' attribute allowed \
+                     per struct",
                 ));
             }
         }
     }
 
-    let named = match fields {
+    let is_named = match fields {
         syn::Fields::Named(_) => true,
         _ => false,
     };
 
-    if id.is_none() && named {
-        id = fields
-            .iter()
-            .enumerate()
-            .find(|(_, field)| {
-                match &field.ident {
-                    Some(ident) => ident == "id",
-                    None => false,
-                }
-            });
+    if id.is_none() && is_named {
+        id = fields.iter().enumerate().find(|(_, f)| match &f.ident {
+            Some(ident) => ident == "id",
+            None => false,
+        });
     }
 
-    id
-        .map(|(index, field)| {
-            let ty = &field.ty;
-
-            let field = if named {
-                let ident = &field.ident.as_ref().unwrap(); // SAFE
-                quote!(#ident)
-            } else {
-                let index = syn::Index::from(index);
-                quote!(#index)
-            };
-
-            (ty, field)
-        })
-        .ok_or_else(|| {
-            Error::new(
-                fields.span(),
-                "No id-field found for an aggregate"
-            )
-        })
+    id.map(|(index, field)| {
+        let ty = &field.ty;
+        let field = if is_named {
+            // Named fields always have ident, so unwrapping is OK here.
+            let ident = &field.ident.as_ref().unwrap();
+            quote!(#ident)
+        } else {
+            let index = syn::Index::from(index);
+            quote!(#index)
+        };
+        (ty, field)
+    })
+    .ok_or_else(|| Error::new(fields.span(), "No 'id' field found for an aggregate"))
 }
 
 #[cfg(test)]

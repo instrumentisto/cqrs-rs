@@ -19,7 +19,7 @@ macro_rules! export {
 /// Re-exports proc macro `$fn` via WASM ABI.
 macro_rules! export {
     ($mod:ident::$fn:ident) => {
-        export!{$mod::$fn as $fn}
+        export! {$mod::$fn as $fn}
     };
     ($mod:ident::$fn:ident as $export:ident) => {
         #[no_mangle]
@@ -40,8 +40,8 @@ pub fn expand<TS: From<TokenStream>>(
     }
 }
 
-export!{aggregate::derive as aggregate_derive}
-export!{event::aggregate_event_derive}
-export!{event::event_derive}
-export!{event::registered_event_derive}
-export!{event::versioned_event_derive}
+export!(aggregate::derive as aggregate_derive);
+export!(event::aggregate_event_derive);
+export!(event::event_derive);
+export!(event::registered_event_derive);
+export!(event::versioned_event_derive);

@@ -48,11 +48,7 @@ fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
 /// Implements [`crate::versioned_event_derive`] macro expansion for enums
 /// via [`synstructure`].
 fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
-    util::assert_valid_attr_args_used(
-        &input.attrs,
-        super::ATTR_NAME,
-        super::VALID_ENUM_ARGS,
-    )?;
+    util::assert_valid_attr_args_used(&input.attrs, super::ATTR_NAME, super::VALID_ENUM_ARGS)?;
 
     let mut structure = Structure::try_new(&input)?;
 

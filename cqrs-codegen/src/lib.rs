@@ -32,23 +32,23 @@ mod wasm {
 /// Specifying `#[aggregate(type = "...")]` attribute is __mandatory__
 /// (and only single such attribute allowed per struct).
 ///
-/// Struct deriving [`cqrs::Aggregate`] required to contain an id-field.
+/// Struct deriving [`cqrs::Aggregate`] required to contain an id field.
 /// For named-structs a field with a name `id` is inferred as an id-field.
-/// Any field can be explicitly specified as an id-field
+/// Any field can be explicitly specified as an id field
 /// with `#[aggregate(id)]` attribute.
 ///
 /// # Examples
 /// ```
 /// # use cqrs_codegen::Aggregate;
 /// #
-/// #[derive(Default, Aggregate)]
+/// #[derive(Aggregate, Default)]
 /// #[aggregate(type = "inferred.id.aggregate")]
 /// struct InferredIdAggregate {
 ///     id: i32,
 ///     value: String,
 /// }
 ///
-/// #[derive(Default, Aggregate)]
+/// #[derive(Aggregate, Default)]
 /// #[aggregate(type = "explicit.id.aggregate")]
 /// struct ExplicitIdAggregate {
 ///     #[aggregate(id)]
@@ -56,7 +56,7 @@ mod wasm {
 ///     value: String,
 /// }
 ///
-/// #[derive(Default, Aggregate)]
+/// #[derive(Aggregate, Default)]
 /// #[aggregate(type = "tuple.struct.aggregate")]
 /// struct TupleStructAggregate(#[aggregate(id)] i32, String);
 /// ```
