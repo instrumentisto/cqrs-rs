@@ -46,7 +46,7 @@ fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
         quote! {
             #[inline(always)]
             fn expected_version(&self) -> Option<::cqrs::Version> {
-                Some(self.#ver) // TODO: Copy? Clone?
+                Some(self.#ver)
             }
         }
     });
