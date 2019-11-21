@@ -60,7 +60,7 @@ pub(crate) fn render_struct(
     })
 }
 
-/// Renders field identificator for named or unnamed struct.
+/// Renders field identifier for named or unnamed struct.
 pub(crate) fn render_field_ident(index: usize, field: &syn::Field) -> TokenStream {
     match &field.ident {
         Some(ident) => quote!(#ident),
@@ -71,7 +71,7 @@ pub(crate) fn render_field_ident(index: usize, field: &syn::Field) -> TokenStrea
     }
 }
 
-/// Finds field marked with `flag` attribute.
+/// Finds field marked with `flag` argument inside `attr` attribute.
 pub(crate) fn find_field_with_flag<'field>(
     fields: &'field syn::Fields,
     attr: &str,
@@ -81,16 +81,12 @@ pub(crate) fn find_field_with_flag<'field>(
     let mut result = None;
 
     for (index, field) in fields.iter().enumerate() {
-        let meta = find_nested_meta(&field.attrs, attr)?;
-
-        let meta = match meta {
-            Some(meta) => meta,
+        let meta = match find_nested_meta(&field.attrs, attr)? {
+            Some(m) => m,
             None => continue,
         };
 
-        let found = parse_flag(&meta, flag, valid_args, attr)?;
-
-        if found {
+        if parse_flag(&meta, flag, valid_args, attr)? {
             let span = field.span();
             if result.replace((index, field)).is_some() {
                 return Err(Error::new(

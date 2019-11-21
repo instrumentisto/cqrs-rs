@@ -81,10 +81,10 @@ fn parse_command_aggregate(meta: &util::Meta) -> Result<String> {
     Ok(lit.value())
 }
 
-/// Finds field marked with `flag` attribute.
+/// Finds field marked with `flag` argument inside [`ATTR_NAME`] attribute.
 fn find_field_with_flag(fields: &syn::Fields, flag: &str) -> Result<Option<TokenStream>> {
     util::find_field_with_flag(fields, ATTR_NAME, flag, VALID_ARGS)
-        .map(|option| option.map(|(index, field)| util::render_field_ident(index, field)))
+        .map(|opt| opt.map(|(idx, fld)| util::render_field_ident(idx, fld)))
 }
 
 #[cfg(test)]
