@@ -333,6 +333,8 @@ where
     )
 }
 
+/// Returns `ty` (or type referenced by `ty` if `ty` is a reference-type)
+/// if `is_type_parameter_used_in_type` returns true
 pub(crate) fn get_type_if_type_parameter_used_in_type<'a>(
     type_parameters: &HashSet<&'a syn::Ident>,
     ty: &'a syn::Type,
@@ -347,6 +349,7 @@ pub(crate) fn get_type_if_type_parameter_used_in_type<'a>(
     }
 }
 
+/// Checks if any of `type_parameters` is used in `ty` signature
 fn is_type_parameter_used_in_type<'a>(
     type_parameters: &HashSet<&syn::Ident>,
     ty: &syn::Type,

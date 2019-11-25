@@ -1,4 +1,4 @@
-//! Codegen for [`cqrs::Command`].
+//! Codegen for [`cqrs::EventSourced`].
 
 use std::collections::HashSet;
 
@@ -92,7 +92,6 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
     Ok(quote! {
         #[automatically_derived]
         impl#impl_generics ::cqrs::EventSourced<#type_name#ty_generics> for #aggregate #where_clause {
-            #[inline(always)]
             fn apply(&mut self, ev: &#type_name#ty_generics) {
                 match *ev {
                     #body
@@ -102,7 +101,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
     })
 }
 
-/// Parses aggregate of [`cqrs::Command`] from `#[command(...)]` attribute.
+/// Parses aggregate of [`cqrs::EventSourced`] from `#[event_sourced(...)]` attribute.
 fn parse_event_sourced_aggregate(meta: &util::Meta) -> Result<String> {
     let lit: &syn::LitStr =
         util::parse_lit(meta, "aggregate", &["aggregate"], ATTR_NAME, "= \"...\"")?;
