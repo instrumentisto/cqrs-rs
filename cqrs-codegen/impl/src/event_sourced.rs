@@ -128,7 +128,6 @@ mod spec {
         let output = quote! {
             #[automatically_derived]
             impl ::cqrs::EventSourced<Event> for Aggregate {
-                #[inline(always)]
                 fn apply(&mut self, ev: &Event) {
                     match *ev {
                         Event::Event1(ref ev,) => {{ self.apply(ev) }}
