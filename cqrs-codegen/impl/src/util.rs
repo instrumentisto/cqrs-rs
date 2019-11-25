@@ -333,50 +333,44 @@ where
     )
 }
 
-/// Returns `ty` (or type referenced by `ty` if `ty` is a reference-type)
-/// if `is_type_parameter_used_in_type` returns true
-pub(crate) fn get_type_if_type_parameter_used_in_type<'a>(
-    type_parameters: &HashSet<&'a syn::Ident>,
+/// Returns `ty` (or type referenced by `ty` if `ty` is a reference-type itself)
+/// if `is_type_param_used_in_type` returns `true`.
+pub(crate) fn get_type_if_type_param_used_in_type<'a>(
+    type_params: &HashSet<&'a syn::Ident>,
     ty: &'a syn::Type,
 ) -> Option<&'a syn::Type> {
-    if is_type_parameter_used_in_type(type_parameters, ty) {
-        match ty {
-            syn::Type::Reference(syn::TypeReference { elem: ty, .. }) => Some(ty),
-            ty => Some(ty),
-        }
-    } else {
-        None
+    if !is_type_param_used_in_type(type_params, ty) {
+        return None;
+    }
+    match ty {
+        syn::Type::Reference(syn::TypeReference { elem: ty, .. }) => Some(ty),
+        ty => Some(ty),
     }
 }
 
-/// Checks if any of `type_parameters` is used in `ty` signature
-fn is_type_parameter_used_in_type<'a>(
-    type_parameters: &HashSet<&syn::Ident>,
-    ty: &syn::Type,
-) -> bool {
+/// Checks if any of given `type_params` is used in `ty` type signature.
+fn is_type_param_used_in_type<'a>(type_params: &HashSet<&syn::Ident>, ty: &syn::Type) -> bool {
     match ty {
         syn::Type::Path(ty) => {
             if let Some(qself) = &ty.qself {
-                if is_type_parameter_used_in_type(type_parameters, &qself.ty) {
+                if is_type_param_used_in_type(type_params, &qself.ty) {
                     return true;
                 }
             }
 
-            if let Some(segment) = ty.path.segments.first() {
-                if type_parameters.contains(&segment.ident) {
+            if let Some(seg) = ty.path.segments.first() {
+                if type_params.contains(&seg.ident) {
                     return true;
                 }
             }
 
-            ty.path.segments.iter().any(|segment| {
-                if let syn::PathArguments::AngleBracketed(arguments) = &segment.arguments {
-                    arguments.args.iter().any(|argument| match argument {
+            ty.path.segments.iter().any(|seg| {
+                if let syn::PathArguments::AngleBracketed(args) = &seg.arguments {
+                    args.args.iter().any(|arg| match arg {
                         syn::GenericArgument::Type(ty) => {
-                            is_type_parameter_used_in_type(type_parameters, ty)
+                            is_type_param_used_in_type(type_params, ty)
                         }
-                        syn::GenericArgument::Constraint(constraint) => {
-                            type_parameters.contains(&constraint.ident)
-                        }
+                        syn::GenericArgument::Constraint(c) => type_params.contains(&c.ident),
                         _ => false,
                     })
                 } else {
@@ -384,9 +378,7 @@ fn is_type_parameter_used_in_type<'a>(
                 }
             })
         }
-
-        syn::Type::Reference(ty) => is_type_parameter_used_in_type(type_parameters, &ty.elem),
-
+        syn::Type::Reference(ty) => is_type_param_used_in_type(type_params, &ty.elem),
         _ => false,
     }
 }

@@ -49,8 +49,8 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
         )
     });
 
-    let body = structure.each(|binding_info| {
-        let ev = &binding_info.binding;
+    let body = structure.each(|info| {
+        let ev = &info.binding;
         quote!(self.apply(#ev))
     });
 
@@ -61,8 +61,8 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
         .generics
         .params
         .iter()
-        .filter_map(|generic_param| match generic_param {
-            syn::GenericParam::Type(type_param) => Some(&type_param.ident),
+        .filter_map(|p| match p {
+            syn::GenericParam::Type(tp) => Some(&tp.ident),
             _ => None,
         })
         .collect();
@@ -70,13 +70,13 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
     let iter = structure
         .variants()
         .iter()
-        .map(|variant| variant.ast().fields.iter())
+        .map(|v| v.ast().fields.iter())
         .flatten();
 
     let mut where_clause = where_clause.cloned();
 
     for field in iter {
-        if let Some(ty) = util::get_type_if_type_parameter_used_in_type(&type_params, &field.ty) {
+        if let Some(ty) = util::get_type_if_type_param_used_in_type(&type_params, &field.ty) {
             let predicates = &mut where_clause
                 .get_or_insert_with(|| syn::WhereClause {
                     where_token: <syn::Token![where]>::default(),
@@ -101,11 +101,11 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
     })
 }
 
-/// Parses aggregate of [`cqrs::EventSourced`] from `#[event_sourced(...)]` attribute.
+/// Parses aggregate to be [`cqrs::EventSourced`] from `#[event_sourced(...)]`
+/// attribute.
 fn parse_event_sourced_aggregate(meta: &util::Meta) -> Result<String> {
     let lit: &syn::LitStr =
         util::parse_lit(meta, "aggregate", &["aggregate"], ATTR_NAME, "= \"...\"")?;
-
     Ok(lit.value())
 }
 

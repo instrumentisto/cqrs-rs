@@ -285,26 +285,23 @@ pub fn versioned_event_derive(input: TokenStream) -> TokenStream {
     import!(input, versioned_event_derive)
 }
 
-/// Derives [`cqrs::EventSourced<Event>`][cqrs::EventSourced]
-/// implementation for specified aggregate.
+/// Derives [`cqrs::EventSourced`] implementation on [`cqrs::AggregateEvent`]
+/// for a specified [`cqrs::Aggregate`].
 ///
-/// This derive macro should be applied to enum-type
-/// representing set of possible events, but it will generate
-/// implementation of [`cqrs::EventSourced<Event>`][cqrs::EventSourced]
-/// for an aggregate-type specified via `#[event_sourced(aggregate = "...")]`.
-///
-/// The enum is treated as a sum-type representing a set of possible events.
+/// This derive macro should be applied to enum representing a set of possible
+/// events, but it will generate implementation of [`cqrs::EventSourced`]
+/// for the [`cqrs::Aggregate`] type specified via
+/// `#[event_sourced(aggregate = "...")]` attribute.
 ///
 /// [`cqrs::EventSourced`] derive macro can only be applied to an enum
 /// when all variants of such enum have exactly one field
 /// (variant can be either a tuple-variant or a struct-variant)
-/// and implementation of
-/// [`cqrs::EventSourced<EventVariantField>`][cqrs::EventSourced]
-/// should be defined for each field.
+/// and the reffered [`cqrs::Aggregate`] should implement [`cqrs::EventSourced`]
+/// for each field of enum.
 ///
 /// Specifying `#[event_sourced(aggregate = "...")]` attribute is __mandatory__
 /// (and only single such attribute allowed per enum). The attribute is
-/// treated as a type of the aggregate with which event is associated.
+/// treated as a type of the aggregate that event is associated with.
 ///
 /// # Examples
 /// ```
@@ -348,7 +345,6 @@ pub fn versioned_event_derive(input: TokenStream) -> TokenStream {
 ///         // ...
 ///     }
 /// }
-///
 /// impl cqrs::EventSourced<UserRemoved> for User {
 ///     fn apply(&mut self, ev: &UserRemoved) {
 ///         // ...
