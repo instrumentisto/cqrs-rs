@@ -38,8 +38,9 @@ pub trait EventSourced<Ev: Event + ?Sized> {
     fn apply(&mut self, event: &Ev);
 }
 
-/// [`Event`] representing a set of different types.
+/// [`Event`] (or a set of them) providing its [`EventType`].
 pub trait TypedEvent: Event {
+    /// [`EventType`]s provided by this [`TypedEvent`].
     type EventTypes: Iterator<Item = EventType>;
 
     /// Returns all available types of this [`Event`].
