@@ -64,6 +64,7 @@ pub use self::{
     },
     lifecycle::BorrowableAsContext,
 };
+use std::iter::FromIterator;
 
 #[async_trait(?Send)]
 pub trait CommandGateway<Cmd: Command, Mt> {
@@ -71,6 +72,19 @@ pub trait CommandGateway<Cmd: Command, Mt> {
     type Ok;
 
     async fn send(&self, cmd: Cmd, meta: Mt) -> Result<Self::Ok, Self::Err>;
+
+    async fn send_many(&self, cmds: Vec<Cmd>, meta: Mt) -> Result<Vec<Self::Ok>, Self::Err>
+        where
+            Mt: Clone + 'async_trait,
+            Cmd: 'async_trait,
+    {
+        let mut res = Vec::new();
+
+        for cmd in cmds {
+            res.push(self.send(cmd, meta.clone()).await?)
+        }
+        Ok(res)
+    }
 }
 
 #[async_trait(?Send)]
