@@ -73,15 +73,24 @@ pub trait CommandGateway<Cmd: Command, Mt> {
 
     async fn send(&self, cmd: Cmd, meta: Mt) -> Result<Self::Ok, Self::Err>;
 
-    async fn send_many(&self, cmds: Vec<Cmd>, meta: Mt) -> Result<Vec<Self::Ok>, Self::Err>
+    async fn send_many(
+        &self,
+        cmds: Vec<Cmd>,
+        meta: Mt
+    ) -> Result<
+        Vec<(Option<<Cmd::Aggregate as Aggregate>::Id>, Self::Ok)>,
+        Self::Err,
+    >
         where
             Mt: Clone + 'async_trait,
             Cmd: 'async_trait,
+            <Cmd::Aggregate as Aggregate>::Id: Clone
     {
         let mut res = Vec::new();
 
         for cmd in cmds {
-            res.push(self.send(cmd, meta.clone()).await?)
+            let id = cmd.aggregate_id().cloned();
+            res.push((id, self.send(cmd, meta.clone()).await?))
         }
         Ok(res)
     }
