@@ -50,6 +50,7 @@ mod event_processing;
 pub mod lifecycle;
 
 use async_trait::async_trait;
+use futures::future;
 
 #[doc(inline)]
 pub use cqrs_codegen::*;
@@ -64,7 +65,6 @@ pub use self::{
     },
     lifecycle::BorrowableAsContext,
 };
-use std::iter::FromIterator;
 
 #[async_trait(?Send)]
 pub trait CommandGateway<Cmd: Command, Mt> {
@@ -73,28 +73,59 @@ pub trait CommandGateway<Cmd: Command, Mt> {
 
     async fn send(&self, cmd: Cmd, meta: Mt) -> Result<Self::Ok, Self::Err>;
 
+    /*
+    async fn send_many<CMDs>(&self, cmds: CMDs, meta: Mt) -> Result<Vec<Self::Ok>, Self::Err>
+    where
+        Mt: Clone + 'async_trait,
+        Cmd: 'async_trait,
+        CMDs: IntoIterator<Item = Cmd>
+    {
+        let futures: Vec<_> = cmds
+            .into_iter()
+            .map(|cmd| self.send(cmd, meta.clone()))
+            .collect();
+
+        Ok(future::try_join_all(futures).await?)
+    }
+    */
+}
+
+#[async_trait(?Send)]
+pub trait BatchCommandGateway<Cmd: Command, CMDs: IntoIterator<Item = Cmd>, Mt> {
+    type Err;
+    type Ok;
+
+    async fn send_many(&self, cmds: CMDs, meta: Mt) -> Result<Vec<Self::Ok>, Self::Err>
+    where
+        Cmd: 'async_trait,
+        CMDs: 'async_trait;
+}
+
+/*
+#[async_trait(?Send)]
+impl<Cmd, Mt, T> BatchCommandGateway<Cmd, Vec<Cmd>, Mt> for T
+    where
+        T: CommandGateway<Cmd, Mt>,
+        Cmd: Command,
+        Mt: Clone,
+{
+    type Err = T::Err;
+    type Ok = T::Ok;
+
     async fn send_many(
         &self,
         cmds: Vec<Cmd>,
         meta: Mt
-    ) -> Result<
-        Vec<(Option<<Cmd::Aggregate as Aggregate>::Id>, Self::Ok)>,
-        Self::Err,
-    >
-        where
-            Mt: Clone + 'async_trait,
-            Cmd: 'async_trait,
-            <Cmd::Aggregate as Aggregate>::Id: Clone
-    {
-        let mut res = Vec::new();
+    ) -> Result<Vec<Self::Ok>, Self::Err> {
+        let futures: Vec<_> = cmds
+            .into_iter()
+            .map(|cmd| self.send(cmd, meta.clone()))
+            .collect();
 
-        for cmd in cmds {
-            let id = cmd.aggregate_id().cloned();
-            res.push((id, self.send(cmd, meta.clone()).await?))
-        }
-        Ok(res)
+        Ok(future::try_join_all(futures).await?)
     }
 }
+*/
 
 #[async_trait(?Send)]
 pub trait CommandBus<Cmd: Command> {
