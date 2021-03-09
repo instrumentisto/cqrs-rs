@@ -72,22 +72,6 @@ pub trait CommandGateway<Cmd: Command, Mt> {
     type Ok;
 
     async fn send(&self, cmd: Cmd, meta: Mt) -> Result<Self::Ok, Self::Err>;
-
-    /*
-    async fn send_many<CMDs>(&self, cmds: CMDs, meta: Mt) -> Result<Vec<Self::Ok>, Self::Err>
-    where
-        Mt: Clone + 'async_trait,
-        Cmd: 'async_trait,
-        CMDs: IntoIterator<Item = Cmd>
-    {
-        let futures: Vec<_> = cmds
-            .into_iter()
-            .map(|cmd| self.send(cmd, meta.clone()))
-            .collect();
-
-        Ok(future::try_join_all(futures).await?)
-    }
-    */
 }
 
 #[async_trait(?Send)]
@@ -100,32 +84,6 @@ pub trait BatchCommandGateway<Cmd: Command, CMDs: IntoIterator<Item = Cmd>, Mt> 
         Cmd: 'async_trait,
         CMDs: 'async_trait;
 }
-
-/*
-#[async_trait(?Send)]
-impl<Cmd, Mt, T> BatchCommandGateway<Cmd, Vec<Cmd>, Mt> for T
-    where
-        T: CommandGateway<Cmd, Mt>,
-        Cmd: Command,
-        Mt: Clone,
-{
-    type Err = T::Err;
-    type Ok = T::Ok;
-
-    async fn send_many(
-        &self,
-        cmds: Vec<Cmd>,
-        meta: Mt
-    ) -> Result<Vec<Self::Ok>, Self::Err> {
-        let futures: Vec<_> = cmds
-            .into_iter()
-            .map(|cmd| self.send(cmd, meta.clone()))
-            .collect();
-
-        Ok(future::try_join_all(futures).await?)
-    }
-}
-*/
 
 #[async_trait(?Send)]
 pub trait CommandBus<Cmd: Command> {
