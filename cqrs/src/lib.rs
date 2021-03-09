@@ -50,7 +50,6 @@ mod event_processing;
 pub mod lifecycle;
 
 use async_trait::async_trait;
-use futures::future;
 
 #[doc(inline)]
 pub use cqrs_codegen::*;
