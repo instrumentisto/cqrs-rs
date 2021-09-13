@@ -92,11 +92,11 @@ pub trait AggregateEvent: TypedEvent {
 pub trait Query {}
 
 #[async_trait(?Send)]
-pub trait QueryGateway<Qr: Query> {
+pub trait QueryGateway<Qr: Query, Mt = ()> {
     type Err;
     type Ok;
 
-    async fn query(&self, query: Qr) -> Result<Self::Ok, Self::Err>
+    async fn query(&self, query: Qr, meta: Mt) -> Result<Self::Ok, Self::Err>
     where
         Qr: 'async_trait;
 }
