@@ -9,7 +9,7 @@ use std::{
 };
 
 #[cfg(feature = "arrayvec")]
-use arrayvec::{Array, ArrayVec};
+use arrayvec::ArrayVec;
 use async_trait::async_trait;
 
 use super::{Aggregate, LocalBoxTryStream, Version};
@@ -517,7 +517,7 @@ impl<Ev> IntoEvents<Ev> for [Ev; 4] {
 }
 
 #[cfg(feature = "arrayvec")]
-impl<Ev, A: Array<Item = Ev>> IntoEvents<Ev> for ArrayVec<A> {
+impl<Ev, const CAP: usize> IntoEvents<Ev> for ArrayVec<Ev, CAP> {
     type Iter = Self;
 
     #[inline]
