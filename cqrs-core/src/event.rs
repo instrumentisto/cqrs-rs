@@ -239,6 +239,7 @@ impl TryFrom<EventVersion> for i8 {
 
 /// Representation of [`Event`] sequence number, starting at 1.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct EventNumber(NonZeroU128);
 
 impl EventNumber {
@@ -247,7 +248,7 @@ impl EventNumber {
     pub const MIN_VALUE: Self =
         // One is absolutely non-zero, and this is required for this to be
         // usable in a `const` context.
-        Self(unsafe {NonZeroU128::new_unchecked(1)});
+        Self(unsafe { NonZeroU128::new_unchecked(1) });
 
     /// Attempts to create a new [`EventNumber`] from a given [`u128`] number.
     /// Returns [`None`] if the given number is `0`.
