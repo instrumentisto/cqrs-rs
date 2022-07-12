@@ -124,3 +124,48 @@ fn derives_for_generic_tuple_struct_with_explicit_id_field() {
     );
     assert_eq!(*TestAggregate::<i32>::default().id(), 0);
 }
+
+#[test]
+fn derives_for_generic_struct_with_default_type() {
+    #[derive(Default, Aggregate)]
+    #[aggregate(type = "test.aggregate")]
+    struct TestAggregate<T: Default = i32> {
+        #[aggregate(id)]
+        id: i32,
+
+        field: T,
+    }
+
+    type TestAgg = TestAggregate;
+
+    assert_eq!(TestAgg::AGGREGATE_TYPE, "test.aggregate");
+    assert_eq!(TestAgg::default().aggregate_type(), "test.aggregate");
+    assert_eq!(*TestAgg::default().id(), 0);
+}
+
+#[test]
+fn derives_for_const_generic_struct() {
+    #[derive(Default, Aggregate)]
+    #[aggregate(type = "test.aggregate")]
+    struct TestAggregate<const T: u8>(#[aggregate(id)] i32);
+
+    assert_eq!(TestAggregate::<1>::AGGREGATE_TYPE, "test.aggregate");
+    assert_eq!(
+        TestAggregate::<1>::default().aggregate_type(),
+        "test.aggregate"
+    );
+    assert_eq!(*TestAggregate::<1>::default().id(), 0);
+}
+
+#[test]
+fn derives_for_const_generic_struct_with_default_value() {
+    #[derive(Default, Aggregate)]
+    #[aggregate(type = "test.aggregate")]
+    struct TestAggregate<const T: u8 = 0>(#[aggregate(id)] i32);
+
+    type TestAgg = TestAggregate;
+
+    assert_eq!(TestAgg::AGGREGATE_TYPE, "test.aggregate");
+    assert_eq!(TestAgg::default().aggregate_type(), "test.aggregate");
+    assert_eq!(*TestAgg::default().id(), 0);
+}
