@@ -11,7 +11,7 @@ use async_trait::async_trait;
 use cqrs_core::Event;
 
 #[async_trait(?Send)]
-pub trait EventHandler<Ev: Event + ?Sized> {
+pub trait EventHandler<Ev: ?Sized> {
     type Context: ?Sized;
     type Err;
 
