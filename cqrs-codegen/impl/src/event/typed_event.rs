@@ -4,7 +4,7 @@ use std::collections::HashSet;
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{spanned::Spanned as _, Error, Result, WhereClause};
+use syn::{parse_quote, spanned::Spanned as _, Error, Result};
 use synstructure::Structure;
 
 use crate::util;
@@ -21,19 +21,8 @@ pub fn derive(input: syn::DeriveInput) -> Result<TokenStream> {
 /// Implements `cqrs::TypedEvent` part of [`crate::event_derive`] macro
 /// expansion for structs.
 fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
-    let ident = &input.ident;
     let body = quote! {
-        #[inline(always)]
-        fn event_types() -> &'static ::std::vec::Vec<::cqrs::EventType> {
-            static TYPES: ::cqrs::Lazy<::std::vec::Vec<::cqrs::EventType>> =
-                ::cqrs::Lazy::new(|| {
-                    let mut v = ::std::vec::Vec::with_capacity(1);
-                    v.push(#ident::EVENT_TYPE);
-                    v
-                });
-
-            &*TYPES
-        }
+        const EVENT_TYPES: &'static [::cqrs::EventType] = &[Self::EVENT_TYPE];
     };
 
     util::render_struct(&input, quote!(::cqrs::TypedEvent), body, None)
@@ -96,42 +85,35 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
         types.push(quote!(#path));
     }
 
-    let const_len = types.len();
     let const_doc = format!("Type names of [`{}`] events.", input.ident);
 
     let type_name = &input.ident;
-    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
-    let types_iter = generate_types_iter(&types);
+    let mut where_clause = input
+        .generics
+        .where_clause
+        .clone()
+        .unwrap_or_else(|| parse_quote!(where));
+    for ty in &types {
+        where_clause
+            .predicates
+            .push(parse_quote!(#ty: ::cqrs::TypedEvent));
+    }
+
+    let (impl_generics, ty_generics, _) = input.generics.split_for_impl();
+    let subtypes = types
+        .iter()
+        .map(|ty| quote!(<#ty as ::cqrs::TypedEvent>::EVENT_TYPES))
+        .collect::<Vec<_>>();
 
     Ok(quote! {
         #[automatically_derived]
         impl#impl_generics ::cqrs::TypedEvent for #type_name#ty_generics #where_clause {
-            #[inline(always)]
-            fn event_types() -> &'static ::std::vec::Vec<::cqrs::EventType> {
-                static TYPES: ::cqrs::Lazy<::std::vec::Vec<cqrs::EventType>> =
-                    ::cqrs::Lazy::new(|| #types_iter
-                    .map(|t| *t)
-                    .collect()
-                );
-
-                &*TYPES
-            }
+            #[doc = #const_doc]
+            const EVENT_TYPES: &'static [::cqrs::EventType]
+                = ::cqrs::const_concat_slices!(::cqrs::EventType, #( #subtypes ),*);
         }
     })
-}
-
-fn generate_types_iter(types: &[TokenStream]) -> TokenStream {
-    if types.is_empty() {
-        return TokenStream::new();
-    }
-
-    let ty = types.first().unwrap().clone();
-    let mut s = quote!(#ty::event_types().into_iter());
-    for ty in types.iter().skip(1) {
-        s.extend(quote!(.chain(#ty::event_types())));
-    }
-    s
 }
 
 #[cfg(test)]
