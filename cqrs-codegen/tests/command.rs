@@ -162,7 +162,7 @@ fn derives_for_struct_with_const_generic_parameters() {
         version: Version,
     }
 
-    let command = TestCommand::<{ 1 }> {
+    let command = TestCommand::<{ 0 }> {
         id: 1,
         version: Version::Initial,
     };

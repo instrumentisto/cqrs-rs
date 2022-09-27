@@ -101,24 +101,27 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
     }
 
     let (impl_generics, ty_generics, _) = input.generics.split_for_impl();
+
+    // TODO: Remove this once generics are supported in const contexts.
+    //       https://github.com/instrumentisto/cqrs-rs/pull/21#issuecomment-1257982811
+    let type_params = type_params.into_iter().collect::<Vec<_>>();
+    let type_params = quote!(#( type #type_params = (); )*);
+
     let subtypes = types
         .iter()
         .map(|ty| quote!(<#ty as ::cqrs::TypedEvent>::EVENT_TYPES))
         .collect::<Vec<_>>();
 
-    let type_params = type_params.into_iter().collect::<Vec<_>>();
-    let r = quote! {
+    Ok(quote! {
         #[automatically_derived]
         impl#impl_generics ::cqrs::TypedEvent for #type_name#ty_generics #where_clause {
             #[doc = #const_doc]
             const EVENT_TYPES: &'static [::cqrs::EventType] = {
-                #( type #type_params = (); )*
+                #type_params
                 ::cqrs::const_concat_slices!(::cqrs::EventType, #( #subtypes ),*)
             };
         }
-    };
-    // panic!("{}", r);
-    Ok(r)
+    })
 }
 
 #[cfg(test)]
