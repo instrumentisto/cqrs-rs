@@ -160,13 +160,11 @@ fn derives_for_struct_with_const_generic_parameters() {
     struct TestCommand<const T: i32 = 0> {
         id: i32,
         version: Version,
-        parameter: T,
     }
 
-    let command = TestCommand {
+    let command = TestCommand::<{ 1 }> {
         id: 1,
         version: Version::Initial,
-        parameter: 1,
     };
 
     assert_eq!(command.aggregate_id(), None);

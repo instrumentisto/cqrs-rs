@@ -106,14 +106,19 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
         .map(|ty| quote!(<#ty as ::cqrs::TypedEvent>::EVENT_TYPES))
         .collect::<Vec<_>>();
 
-    Ok(quote! {
+    let type_params = type_params.into_iter().collect::<Vec<_>>();
+    let r = quote! {
         #[automatically_derived]
         impl#impl_generics ::cqrs::TypedEvent for #type_name#ty_generics #where_clause {
             #[doc = #const_doc]
-            const EVENT_TYPES: &'static [::cqrs::EventType]
-                = ::cqrs::const_concat_slices!(::cqrs::EventType, #( #subtypes ),*);
+            const EVENT_TYPES: &'static [::cqrs::EventType] = {
+                #( type #type_params = (); )*
+                ::cqrs::const_concat_slices!(::cqrs::EventType, #( #subtypes ),*)
+            };
         }
-    })
+    };
+    // panic!("{}", r);
+    Ok(r)
 }
 
 #[cfg(test)]

@@ -172,6 +172,9 @@ pub fn command_derive(input: TokenStream) -> TokenStream {
 /// Generated implementation of [`cqrs::Event::event_type`] would match on all
 /// variants and proxy calls to each variant's field.
 ///
+/// **Note**: Try to avoid using variants containing complex generic parameters, because at now
+/// compiler replaces them with `()` in const context: [`rust-lang/rust#76200`].
+///
 /// # Examples
 /// ```
 /// # use cqrs_codegen::Event;
@@ -190,6 +193,8 @@ pub fn command_derive(input: TokenStream) -> TokenStream {
 ///     UserRemoved(UserRemoved),
 /// }
 /// ```
+///
+/// [`rust-lang/rust#76200`]: https://github.com/rust-lang/rust/issues/76200
 #[proc_macro_derive(Event, attributes(event))]
 pub fn event_derive(input: TokenStream) -> TokenStream {
     import!(input, event_derive)

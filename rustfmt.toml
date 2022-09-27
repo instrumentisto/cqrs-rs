@@ -1,8 +1,6 @@
 condense_wildcard_suffixes = true
 imports_granularity = "Crate"
 reorder_impl_items = true
-# report_todo = "Always"
-report_fixme = "Always"
 use_field_init_shorthand = true
 use_try_shorthand = true
 unstable_features = true

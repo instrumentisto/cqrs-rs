@@ -27,8 +27,8 @@ fn derives_for_enum() {
     }
 
     assert_eq!(
-        TestEvent::event_types().collect::<Vec<_>>(),
-        vec![TestEvent1::EVENT_TYPE, TestEvent2::EVENT_TYPE],
+        TestEvent::EVENT_TYPES,
+        &[TestEvent1::EVENT_TYPE, TestEvent2::EVENT_TYPE],
     );
 }
 
@@ -68,8 +68,8 @@ fn derives_for_generic_enum() {
     type TestEvent = TestEventGeneric<i32, String>;
 
     assert_eq!(
-        TestEvent::event_types().collect::<Vec<_>>(),
-        vec![
+        TestEvent::EVENT_TYPES,
+        &[
             TestEvent1::EVENT_TYPE,
             TestEvent2::EVENT_TYPE,
             TestEventGeneric1::<i32, String>::EVENT_TYPE,
