@@ -39,7 +39,7 @@ pub use self::{aggregate::*, command::*, event::*};
 /// Helper alias for pin-boxed `?Send` [`Stream`] which yields [`Result`]s.
 pub type LocalBoxTryStream<'a, I, E> = Pin<Box<dyn Stream<Item = Result<I, E>> + 'a>>;
 
-/// Macro used to concat slices at compile time.
+/// Concatenates slices at compile time.
 #[macro_export]
 macro_rules! const_concat_slices {
     ($ty:ty, $a:expr) => {$a};
