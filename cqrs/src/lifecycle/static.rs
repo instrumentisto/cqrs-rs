@@ -3,7 +3,7 @@ use std::borrow::Borrow;
 use async_trait::async_trait;
 use cqrs_core::{
     Aggregate, Command, CommandHandler, Event, EventSink, EventSource, EventSourced,
-    HydratedAggregate, IntoEvents, SnapshotSink, SnapshotSource, SnapshotStrategy,
+    HydratedAggregate, NumberedEvent, SnapshotSink, SnapshotSource, SnapshotStrategy,
 };
 
 use crate::{CommandBus, EventHandler, EventProcessingConfiguration, RegisteredEvent};
@@ -216,7 +216,7 @@ where
     where
         Agg: Aggregate + EventSourced<Ev>,
         Ev: Event + 'static,
-        Evs: AsRef<[Ev]>,
+        Evs: AsRef<[NumberedEvent<Ev>]>,
         Mt: ?Sized,
         EvSnk: EventSink<Agg, Ev, Mt> + ?Sized,
         SsSnk: SnapshotSink<Agg> + ?Sized,
@@ -247,7 +247,7 @@ where
         Cmd: Command,
         Cmd::Aggregate: CommandHandler<Cmd> + EventSourced<CommandHandlerEvent<Cmd>>,
         CommandHandlerEvent<Cmd>: Event + 'static,
-        CommandHandlerOk<Cmd>: IntoEvents<CommandHandlerEvent<Cmd>> + 'static,
+        CommandHandlerOk<Cmd>: AsRef<[NumberedEvent<CommandHandlerEvent<Cmd>>]> + 'static,
         Mt: ?Sized,
         EvSnk: EventSink<Cmd::Aggregate, CommandHandlerEvent<Cmd>, Mt> + ?Sized,
         SsSnk: SnapshotSink<Cmd::Aggregate> + ?Sized,
@@ -286,7 +286,7 @@ where
         Cmd: Command,
         Cmd::Aggregate: CommandHandler<Cmd> + EventSourced<CommandHandlerEvent<Cmd>>,
         CommandHandlerEvent<Cmd>: Event + 'static,
-        CommandHandlerOk<Cmd>: IntoEvents<CommandHandlerEvent<Cmd>> + 'static,
+        CommandHandlerOk<Cmd>: AsRef<[NumberedEvent<CommandHandlerEvent<Cmd>>]> + 'static,
         Mt: ?Sized,
         SsSrc: SnapshotSource<Cmd::Aggregate> + ?Sized,
         EvSrc: EventSource<Cmd::Aggregate, CommandHandlerEvent<Cmd>> + ?Sized,
@@ -320,7 +320,7 @@ where
     where
         Agg: Aggregate + EventSourced<Ev>,
         Ev: Event + 'static,
-        Evs: AsRef<[Ev]>,
+        Evs: AsRef<[NumberedEvent<Ev>]>,
         EvSnk: EventSink<Agg, Ev, Mt> + ?Sized,
         SsSnk: SnapshotSink<Agg> + ?Sized,
         Impl: Borrow<EvSnk> + Borrow<SsSnk>,
@@ -349,7 +349,7 @@ where
         Cmd: Command,
         Cmd::Aggregate: CommandHandler<Cmd> + EventSourced<CommandHandlerEvent<Cmd>>,
         CommandHandlerEvent<Cmd>: Event + 'static,
-        CommandHandlerOk<Cmd>: IntoEvents<CommandHandlerEvent<Cmd>> + 'static,
+        CommandHandlerOk<Cmd>: AsRef<[NumberedEvent<CommandHandlerEvent<Cmd>>]> + 'static,
         EvSnk: EventSink<Cmd::Aggregate, CommandHandlerEvent<Cmd>, Mt> + ?Sized,
         SsSnk: SnapshotSink<Cmd::Aggregate> + ?Sized,
         Impl: Borrow<EvSnk> + Borrow<SsSnk>,
@@ -386,7 +386,7 @@ where
         Cmd: Command,
         Cmd::Aggregate: CommandHandler<Cmd> + EventSourced<CommandHandlerEvent<Cmd>>,
         CommandHandlerEvent<Cmd>: Event + 'static,
-        CommandHandlerOk<Cmd>: IntoEvents<CommandHandlerEvent<Cmd>> + 'static,
+        CommandHandlerOk<Cmd>: AsRef<[NumberedEvent<CommandHandlerEvent<Cmd>>]> + 'static,
         SsSrc: SnapshotSource<Cmd::Aggregate> + ?Sized,
         EvSrc: EventSource<Cmd::Aggregate, CommandHandlerEvent<Cmd>> + ?Sized,
         EvSnk: EventSink<Cmd::Aggregate, CommandHandlerEvent<Cmd>, Mt> + ?Sized,
@@ -433,7 +433,7 @@ where
     Cmd: Command,
     Cmd::Aggregate: CommandHandler<Cmd> + EventSourced<CommandHandlerEvent<Cmd>>,
     CommandHandlerEvent<Cmd>: Event + 'static,
-    CommandHandlerOk<Cmd>: IntoEvents<CommandHandlerEvent<Cmd>> + 'static,
+    CommandHandlerOk<Cmd>: AsRef<[NumberedEvent<CommandHandlerEvent<Cmd>>]> + 'static,
     Impl: SnapshotSource<Cmd::Aggregate>
         + EventSource<Cmd::Aggregate, CommandHandlerEvent<Cmd>>
         + EventSink<Cmd::Aggregate, CommandHandlerEvent<Cmd>, Mt>
@@ -481,7 +481,7 @@ where
     Cmd: Command,
     Cmd::Aggregate: CommandHandler<Cmd> + EventSourced<CommandHandlerEvent<Cmd>>,
     CommandHandlerEvent<Cmd>: Event + 'static,
-    CommandHandlerOk<Cmd>: IntoEvents<CommandHandlerEvent<Cmd>> + 'static,
+    CommandHandlerOk<Cmd>: AsRef<[NumberedEvent<CommandHandlerEvent<Cmd>>]> + 'static,
     Impl: SnapshotSource<Cmd::Aggregate>
         + EventSource<Cmd::Aggregate, CommandHandlerEvent<Cmd>>
         + EventSink<Cmd::Aggregate, CommandHandlerEvent<Cmd>, Mt>
