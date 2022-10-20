@@ -4,7 +4,7 @@
 
 use async_trait::async_trait;
 
-use super::{Aggregate, Event, IntoEvents, Version};
+use super::{Aggregate, Version};
 
 /// [CQRS] command that describes an intent to change the [`Aggregate`]'s state.
 ///

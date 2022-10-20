@@ -1,9 +1,7 @@
-use std::{convert, fmt};
-
 use cqrs_core::{
     Aggregate, Command, CommandHandler, Event, EventNumber, EventSink, EventSource, EventSourced,
-    HydratedAggregate, IntoEvents as _, IntoEvents, NumberedEvent, SnapshotRecommendation,
-    SnapshotSink, SnapshotSource, SnapshotStrategy,
+    HydratedAggregate, NumberedEvent, SnapshotRecommendation, SnapshotSink, SnapshotSource,
+    SnapshotStrategy,
 };
 use derive_more::{Display, Error, From};
 use futures::{future, TryStreamExt as _};
@@ -292,7 +290,7 @@ where
     where
         Agg: Aggregate + EventSourced<Ev>,
         Ev: Event + 'static,
-        Evs: AsRef<[Ev]>,
+        Evs: AsRef<[NumberedEvent<Ev>]>,
         Mt: ?Sized,
         EvSnk: EventSink<Agg, Ev, Mt> + ?Sized,
         SsSnk: SnapshotSink<Agg> + ?Sized,
@@ -333,7 +331,7 @@ where
         Cmd: Command,
         Cmd::Aggregate: CommandHandler<Cmd> + EventSourced<CommandHandlerEvent<Cmd>>,
         CommandHandlerEvent<Cmd>: Event + 'static,
-        CommandHandlerOk<Cmd>: IntoEvents<CommandHandlerEvent<Cmd>> + 'static,
+        CommandHandlerOk<Cmd>: AsRef<[NumberedEvent<CommandHandlerEvent<Cmd>>]> + 'static,
         Mt: ?Sized,
         EvSnk: EventSink<Cmd::Aggregate, CommandHandlerEvent<Cmd>, Mt> + ?Sized,
         SsSnk: SnapshotSink<Cmd::Aggregate> + ?Sized,
@@ -345,7 +343,6 @@ where
         let res = agg.state().handle(cmd, handler_ctx).await;
         match res {
             Ok(ev) => {
-                let ev = ev.into_events();
                 let events = ev.as_ref();
                 if !events.is_empty() {
                     if is_new {
@@ -354,10 +351,7 @@ where
                         // because it has no unique ID to persist it's `Event`s
                         // with. So, we should apply at least one `Event` to
                         // make it unique before storing its `Event`s.
-                        agg.apply(NumberedEvent {
-                            num: EventNumber::MIN_VALUE,
-                            data: events.first().unwrap(),
-                        });
+                        agg.apply(events.first().unwrap());
                     }
                     self.apply_events_and_persist::<EvSnk, SsSnk, _, _, _, _, _, _>(
                         &mut agg, events, meta, repo, ctx,
@@ -401,7 +395,7 @@ where
         Cmd: Command,
         Cmd::Aggregate: CommandHandler<Cmd> + EventSourced<CommandHandlerEvent<Cmd>>,
         CommandHandlerEvent<Cmd>: Event + 'static,
-        CommandHandlerOk<Cmd>: IntoEvents<CommandHandlerEvent<Cmd>> + 'static,
+        CommandHandlerOk<Cmd>: AsRef<[NumberedEvent<CommandHandlerEvent<Cmd>>]> + 'static,
         Mt: ?Sized,
         SsSrc: SnapshotSource<Cmd::Aggregate> + ?Sized,
         EvSrc: EventSource<Cmd::Aggregate, CommandHandlerEvent<Cmd>> + ?Sized,
@@ -470,7 +464,7 @@ pub enum LoadExecAndPersistError<Agg, CmdErr, SsSrcErr, EvSrcErr, EvSnkErr, SsSn
 }
 
 impl<Agg, CmdErr, SsSrcErr, EvSrcErr, EvSnkErr, SsSnkErr>
-    convert::From<ExecAndPersistError<Agg, CmdErr, EvSnkErr, SsSnkErr>>
+    From<ExecAndPersistError<Agg, CmdErr, EvSnkErr, SsSnkErr>>
     for LoadExecAndPersistError<Agg, CmdErr, SsSrcErr, EvSrcErr, EvSnkErr, SsSnkErr>
 {
     #[inline]
