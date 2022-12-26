@@ -333,56 +333,6 @@ where
     )
 }
 
-/// Returns `ty` (or type referenced by `ty` if `ty` is a reference-type itself)
-/// if `is_type_param_used_in_type` returns `true`.
-pub(crate) fn get_type_if_type_param_used_in_type<'a>(
-    type_params: &HashSet<&'a syn::Ident>,
-    ty: &'a syn::Type,
-) -> Option<&'a syn::Type> {
-    if !is_type_param_used_in_type(type_params, ty) {
-        return None;
-    }
-    match ty {
-        syn::Type::Reference(syn::TypeReference { elem: ty, .. }) => Some(ty),
-        ty => Some(ty),
-    }
-}
-
-/// Checks if any of given `type_params` is used in `ty` type signature.
-fn is_type_param_used_in_type<'a>(type_params: &HashSet<&syn::Ident>, ty: &syn::Type) -> bool {
-    match ty {
-        syn::Type::Path(ty) => {
-            if let Some(qself) = &ty.qself {
-                if is_type_param_used_in_type(type_params, &qself.ty) {
-                    return true;
-                }
-            }
-
-            if let Some(seg) = ty.path.segments.first() {
-                if type_params.contains(&seg.ident) {
-                    return true;
-                }
-            }
-
-            ty.path.segments.iter().any(|seg| {
-                if let syn::PathArguments::AngleBracketed(args) = &seg.arguments {
-                    args.args.iter().any(|arg| match arg {
-                        syn::GenericArgument::Type(ty) => {
-                            is_type_param_used_in_type(type_params, ty)
-                        }
-                        syn::GenericArgument::Constraint(c) => type_params.contains(&c.ident),
-                        _ => false,
-                    })
-                } else {
-                    false
-                }
-            })
-        }
-        syn::Type::Reference(ty) => is_type_param_used_in_type(type_params, &ty.elem),
-        _ => false,
-    }
-}
-
 /// Custom simplified [`std::convert::TryInto`] trait, to be implemented on
 /// remote types.
 ///

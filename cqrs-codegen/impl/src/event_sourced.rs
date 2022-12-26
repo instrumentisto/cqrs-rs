@@ -57,36 +57,21 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
     let type_name = &input.ident;
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
-    let type_params: HashSet<_> = input
-        .generics
-        .params
-        .iter()
-        .filter_map(|p| match p {
-            syn::GenericParam::Type(tp) => Some(&tp.ident),
-            _ => None,
-        })
-        .collect();
-
-    let iter = structure
-        .variants()
-        .iter()
-        .map(|v| v.ast().fields.iter())
-        .flatten();
+    let iter = structure.variants().iter().flat_map(|v| v.ast().fields);
 
     let mut where_clause = where_clause.cloned();
 
     for field in iter {
-        if let Some(ty) = util::get_type_if_type_param_used_in_type(&type_params, &field.ty) {
-            let predicates = &mut where_clause
-                .get_or_insert_with(|| syn::WhereClause {
-                    where_token: <syn::Token![where]>::default(),
-                    predicates: Punctuated::new(),
-                })
-                .predicates;
+        let ty = &field.ty;
+        let predicates = &mut where_clause
+            .get_or_insert_with(|| syn::WhereClause {
+                where_token: <syn::Token![where]>::default(),
+                predicates: Punctuated::new(),
+            })
+            .predicates;
 
-            predicates.push(syn::parse2(quote!(#aggregate: ::cqrs::EventSourced<#ty>))?);
-            predicates.push(syn::parse2(quote!(#ty: ::cqrs::Event))?);
-        }
+        predicates.push(syn::parse2(quote!(#aggregate: ::cqrs::EventSourced<#ty>))?);
+        predicates.push(syn::parse2(quote!(#ty: ::cqrs::Event))?);
     }
 
     Ok(quote! {
