@@ -68,7 +68,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         )?;
 
         let status = process::Command::new(env::var("CARGO")?)
-            .args(&[
+            .args([
                 "build",
                 "--release",
                 "--target",
