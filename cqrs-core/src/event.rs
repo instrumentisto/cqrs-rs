@@ -135,8 +135,7 @@ where
 #[async_trait(?Send)]
 pub trait EventSink<Agg, Ev, Mt>
 where
-    Agg: Aggregate + EventSourced<Ev>,
-    Ev: Event,
+    Agg: Aggregate,
     Mt: ?Sized,
 {
     /// Type of the error if persisting [`Event`]s fails.
