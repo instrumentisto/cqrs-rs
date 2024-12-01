@@ -4,7 +4,7 @@ use cqrs::TypedEvent as _;
 use cqrs_codegen::{Aggregate, AggregateEvent, Event};
 
 #[derive(Aggregate, Default)]
-#[aggregate(type = "aggregate")]
+#[aggregate(name = "aggregate")]
 struct Aggregate {
     id: i32,
 }
@@ -12,11 +12,11 @@ struct Aggregate {
 #[test]
 fn derives_for_enum() {
     #[derive(Default, Event)]
-    #[event(type = "test.event.1")]
+    #[event(name = "test.event.1")]
     struct TestEvent1;
 
     #[derive(Default, Event)]
-    #[event(type = "test.event.2")]
+    #[event(name = "test.event.2")]
     struct TestEvent2;
 
     #[derive(Event, AggregateEvent)]
@@ -35,22 +35,22 @@ fn derives_for_enum() {
 #[test]
 fn derives_for_generic_enum() {
     #[derive(Default, Event)]
-    #[event(type = "test.event", version = 1)]
+    #[event(name = "test.event", version = 1)]
     struct TestEvent1;
 
     #[derive(Default, Event)]
-    #[event(type = "test.event", version = 2)]
+    #[event(name = "test.event", version = 2)]
     struct TestEvent2;
 
     #[derive(Default, Event)]
-    #[event(type = "test.event.generic.1")]
+    #[event(name = "test.event.generic.1")]
     struct TestEventGeneric1<ID, Data> {
         id: ID,
         data: Data,
     }
 
     #[derive(Default, Event)]
-    #[event(type = "test.event.generic.2")]
+    #[event(name = "test.event.generic.2")]
     struct TestEventGeneric2<ID, Data> {
         id: ID,
         data: Data,

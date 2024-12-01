@@ -65,7 +65,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
 
 /// Parses type of [`cqrs::Aggregate`] from `#[aggregate(...)]` attribute.
 fn parse_aggregate_type(meta: &util::Meta) -> Result<String> {
-    let lit: &syn::LitStr = util::parse_lit(meta, "type", &["type"], ATTR_NAME, "= \"...\"")?;
+    let lit: &syn::LitStr = util::parse_lit(meta, "name", &["name"], ATTR_NAME, "= \"...\"")?;
 
     Ok(lit.value())
 }
@@ -102,7 +102,7 @@ mod spec {
     #[test]
     fn derives_struct_impl() {
         let input = syn::parse_quote! {
-            #[aggregate(type = "aggregate")]
+            #[aggregate(name = "aggregate")]
             struct Aggregate {
                 id: AggregateId,
                 field: i32,

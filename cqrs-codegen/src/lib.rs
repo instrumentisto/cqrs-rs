@@ -29,7 +29,7 @@ mod wasm {
 
 /// Derives [`cqrs::Aggregate`] implementation for structs.
 ///
-/// Specifying `#[aggregate(type = "...")]` attribute is __mandatory__
+/// Specifying `#[aggregate(name = "...")]` attribute is __mandatory__
 /// (and only single such attribute allowed per struct).
 ///
 /// Struct deriving [`cqrs::Aggregate`] required to contain an id field.
@@ -42,14 +42,14 @@ mod wasm {
 /// # use cqrs_codegen::Aggregate;
 /// #
 /// #[derive(Aggregate, Default)]
-/// #[aggregate(type = "inferred.id.aggregate")]
+/// #[aggregate(name = "inferred.id.aggregate")]
 /// struct InferredIdAggregate {
 ///     id: i32,
 ///     value: String,
 /// }
 ///
 /// #[derive(Aggregate, Default)]
-/// #[aggregate(type = "explicit.id.aggregate")]
+/// #[aggregate(name = "explicit.id.aggregate")]
 /// struct ExplicitIdAggregate {
 ///     #[aggregate(id)]
 ///     explicit_id: i32,
@@ -57,7 +57,7 @@ mod wasm {
 /// }
 ///
 /// #[derive(Aggregate, Default)]
-/// #[aggregate(type = "tuple.struct.aggregate")]
+/// #[aggregate(name = "tuple.struct.aggregate")]
 /// struct TupleStructAggregate(#[aggregate(id)] i32, String);
 /// ```
 #[proc_macro_derive(Aggregate, attributes(aggregate))]
@@ -90,17 +90,17 @@ pub fn aggregate_derive(input: TokenStream) -> TokenStream {
 /// # use cqrs_codegen::{Aggregate, AggregateEvent, Event};
 /// #
 /// # #[derive(Aggregate, Default)]
-/// # #[aggregate(type = "user")]
+/// # #[aggregate(name = "user")]
 /// # struct User {
 /// #     id: i32,
 /// # };
 /// #
 /// #[derive(Event)]
-/// #[event(type = "user.created")]
+/// #[event(name = "user.created")]
 /// struct UserCreated;
 ///
 /// #[derive(Event)]
-/// #[event(type = "user.removed")]
+/// #[event(name = "user.removed")]
 /// struct UserRemoved;
 ///
 /// #[derive(AggregateEvent, Event)]
@@ -130,7 +130,7 @@ pub fn aggregate_event_derive(input: TokenStream) -> TokenStream {
 /// # use cqrs_codegen::{Aggregate, Command};
 /// #
 /// # #[derive(Aggregate, Default)]
-/// # #[aggregate(type = "aggregate")]
+/// # #[aggregate(name = "aggregate")]
 /// # struct MyAggregate {
 /// #     id: i32,
 /// # }
@@ -156,7 +156,7 @@ pub fn command_derive(input: TokenStream) -> TokenStream {
 /// When deriving [`cqrs::Event`] for struct, the struct is treated as
 /// a single distinct event.
 ///
-/// Specifying `#[event(type = "...")]` attribute is __mandatory__ (and only
+/// Specifying `#[event(name = "...")]` attribute is __mandatory__ (and only
 /// single such attribute allowed per struct).
 ///
 /// # Enums
@@ -181,11 +181,11 @@ pub fn command_derive(input: TokenStream) -> TokenStream {
 /// # use cqrs_codegen::Event;
 /// #
 /// #[derive(Event)]
-/// #[event(type = "user.created")]
+/// #[event(name = "user.created")]
 /// struct UserCreated;
 ///
 /// #[derive(Event)]
-/// #[event(type = "user.removed")]
+/// #[event(name = "user.removed")]
 /// struct UserRemoved;
 ///
 /// #[derive(Event)]
@@ -227,11 +227,11 @@ pub fn event_derive(input: TokenStream) -> TokenStream {
 /// # use cqrs_codegen::{Event, RegisteredEvent};
 /// #
 /// #[derive(Event, RegisteredEvent)]
-/// #[event(type = "user.created")]
+/// #[event(name = "user.created")]
 /// struct UserCreated;
 ///
 /// #[derive(Event, RegisteredEvent)]
-/// #[event(type = "user.removed")]
+/// #[event(name = "user.removed")]
 /// struct UserRemoved;
 ///
 /// #[derive(Event, RegisteredEvent)]
@@ -273,11 +273,11 @@ pub fn registered_event_derive(input: TokenStream) -> TokenStream {
 /// # use cqrs_codegen::{Event, VersionedEvent};
 /// #
 /// #[derive(Event, VersionedEvent)]
-/// #[event(type = "user.created", version = 1)]
+/// #[event(name = "user.created", version = 1)]
 /// struct UserCreated;
 ///
 /// #[derive(Event, VersionedEvent)]
-/// #[event(type = "user.removed", version = 2)]
+/// #[event(name = "user.removed", version = 2)]
 /// struct UserRemoved;
 ///
 /// #[derive(Event, VersionedEvent)]
@@ -314,17 +314,17 @@ pub fn versioned_event_derive(input: TokenStream) -> TokenStream {
 /// # use cqrs_codegen::{Aggregate, Event, EventSourced};
 /// #
 /// # #[derive(Aggregate, Default)]
-/// # #[aggregate(type = "user")]
+/// # #[aggregate(name = "user")]
 /// # struct User {
 /// #     id: i32,
 /// # };
 /// #
 /// #[derive(Event)]
-/// #[event(type = "user.created")]
+/// #[event(name = "user.created")]
 /// struct UserCreated;
 ///
 /// #[derive(Event)]
-/// #[event(type = "user.removed")]
+/// #[event(name = "user.removed")]
 /// struct UserRemoved;
 ///
 /// #[derive(Event, EventSourced)]

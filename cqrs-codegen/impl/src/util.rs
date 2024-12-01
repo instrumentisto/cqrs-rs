@@ -2,13 +2,13 @@
 
 use std::collections::HashSet;
 
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{punctuated::Punctuated, spanned::Spanned, Error, Result};
 use synstructure::Structure;
 
 /// Shorten alias for attribute's meta.
-pub(crate) type Meta = Punctuated<syn::NestedMeta, syn::Token![,]>;
+pub(crate) type Meta = Punctuated<syn::Meta, syn::Token![,]>;
 
 /// Dispatches macro `input` to one of implementations (for a struct or for an
 /// enum), or returns error if `input` is a union.
@@ -161,13 +161,8 @@ pub(crate) fn assert_valid_attr_args_used(
     };
 
     for m in &meta {
-        let meta = match m {
-            syn::NestedMeta::Meta(m) => m,
-            _ => return Err(Error::new(meta.span(), "Wrong attribute format")),
-        };
-
-        if !valid_args.iter().any(|arg| meta.path().is_ident(arg)) {
-            return Err(Error::new(meta.span(), "Invalid attribute"));
+        if !valid_args.iter().any(|arg| m.path().is_ident(arg)) {
+            return Err(Error::new(m.span(), "Invalid attribute"));
         }
     }
 
@@ -212,11 +207,11 @@ fn find_nested_meta_impl(
     let mut nested_meta = None;
 
     for attr in attrs {
-        if !attr.path.is_ident(attr_name) {
+        if !attr.path().is_ident(attr_name) {
             continue;
         }
 
-        let meta = match attr.parse_meta()? {
+        let meta = match &attr.meta {
             syn::Meta::List(meta) => meta,
             _ => {
                 return Err(Error::new(
@@ -237,7 +232,9 @@ fn find_nested_meta_impl(
             ));
         }
 
-        nested_meta.replace((attr.span(), meta.nested));
+        let parsed = meta.parse_args_with(Meta::parse_terminated)
+            .map_err(|e| syn::Error::new(Span::call_site(), format!("wut: {e}")))?;
+        nested_meta.replace((attr.span(), parsed));
     }
 
     Ok(nested_meta)
@@ -280,7 +277,10 @@ where
     })?;
 
     let lit = match meta {
-        syn::Meta::NameValue(meta) => &meta.lit,
+        syn::Meta::NameValue(syn::MetaNameValue {
+            value: syn::Expr::Lit(expr),
+            ..
+        }) => &expr.lit,
         _ => return Err(wrong_format(meta, attr, arg, fmt)),
     };
     let span = lit.span();
@@ -299,11 +299,6 @@ fn find_arg<'meta>(
     let mut result = None;
 
     for meta in meta {
-        let meta = match meta {
-            syn::NestedMeta::Meta(meta) => meta,
-            _ => return Err(wrong_format(meta, attr, arg, fmt)),
-        };
-
         if !valid_args.iter().any(|arg| meta.path().is_ident(arg)) {
             return Err(Error::new(meta.span(), "Invalid attribute"));
         }

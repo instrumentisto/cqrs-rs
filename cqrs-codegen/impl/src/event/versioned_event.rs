@@ -117,8 +117,7 @@ mod spec {
         };
 
         let output = quote! {
-            #[allow(non_upper_case_globals)]
-            const _DERIVE_cqrs_VersionedEvent_FOR_Event: () = {
+            const _: () = {
                 #[automatically_derived]
                 impl ::cqrs::VersionedEvent for Event {
                     fn event_version(&self) -> &'static ::cqrs::EventVersion {

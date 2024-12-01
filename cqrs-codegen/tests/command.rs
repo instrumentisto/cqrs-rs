@@ -4,7 +4,7 @@ use cqrs::{Command as _, Version};
 use cqrs_codegen::{Aggregate, Command};
 
 #[derive(Aggregate, Default)]
-#[aggregate(type = "aggregate")]
+#[aggregate(name = "aggregate")]
 struct Aggregate {
     id: i32,
 }

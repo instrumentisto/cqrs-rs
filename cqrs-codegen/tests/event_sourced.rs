@@ -6,7 +6,7 @@ use cqrs::EventSourced as _;
 use cqrs_codegen::{Aggregate, Event, EventSourced};
 
 #[derive(Aggregate, Default)]
-#[aggregate(type = "aggregate")]
+#[aggregate(name = "aggregate")]
 struct Aggregate {
     id: i32,
     event1_applied: bool,
@@ -40,19 +40,19 @@ impl<T> cqrs::EventSourced<Event4<T>> for Aggregate {
 }
 
 #[derive(Default, Event)]
-#[event(type = "event.1")]
+#[event(name = "event.1")]
 struct Event1;
 
 #[derive(Default, Event)]
-#[event(type = "event.2")]
+#[event(name = "event.2")]
 struct Event2;
 
 #[derive(Default, Event)]
-#[event(type = "event.3")]
+#[event(name = "event.3")]
 struct Event3<T>(PhantomData<*const T>);
 
 #[derive(Default, Event)]
-#[event(type = "event.4")]
+#[event(name = "event.4")]
 struct Event4<T>(PhantomData<*const T>);
 
 #[test]

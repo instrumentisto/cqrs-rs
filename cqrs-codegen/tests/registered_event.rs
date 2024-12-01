@@ -8,7 +8,7 @@ use cqrs_codegen::{Event, RegisteredEvent};
 #[test]
 fn derives_for_struct() {
     #[derive(Default, Event, RegisteredEvent)]
-    #[event(type = "test.event")]
+    #[event(name = "test.event")]
     struct TestEvent {
         id: i32,
         data: String,
@@ -20,7 +20,7 @@ fn derives_for_struct() {
 #[test]
 fn derives_for_generic_struct() {
     #[derive(Default, Event, RegisteredEvent)]
-    #[event(type = "test.event.generic")]
+    #[event(name = "test.event.generic")]
     struct TestEventGeneric<ID, Data>
     where
         ID: 'static,
@@ -38,11 +38,11 @@ fn derives_for_generic_struct() {
 #[test]
 fn derives_for_enum() {
     #[derive(Default, Event, RegisteredEvent)]
-    #[event(type = "test.event.1")]
+    #[event(name = "test.event.1")]
     struct TestEvent1;
 
     #[derive(Default, Event, RegisteredEvent)]
-    #[event(type = "test.event.2")]
+    #[event(name = "test.event.2")]
     struct TestEvent2;
 
     #[derive(Event, RegisteredEvent)]
@@ -67,11 +67,11 @@ fn derives_for_enum() {
 #[test]
 fn derives_for_deeply_nested_enum() {
     #[derive(Default, Event, RegisteredEvent)]
-    #[event(type = "test.event.1")]
+    #[event(name = "test.event.1")]
     struct TestEvent1;
 
     #[derive(Default, Event, RegisteredEvent)]
-    #[event(type = "test.event.2")]
+    #[event(name = "test.event.2")]
     struct TestEvent2;
 
     #[derive(Event, RegisteredEvent)]
@@ -101,7 +101,7 @@ fn derives_for_deeply_nested_enum() {
 #[test]
 fn derives_for_generic_enum() {
     #[derive(Default, Event, RegisteredEvent)]
-    #[event(type = "test.event.generic.1")]
+    #[event(name = "test.event.generic.1")]
     struct TestEventGeneric1<ID, Data>
     where
         ID: 'static,
@@ -112,7 +112,7 @@ fn derives_for_generic_enum() {
     }
 
     #[derive(Default, Event, RegisteredEvent)]
-    #[event(type = "test.event.generic.2")]
+    #[event(name = "test.event.generic.2")]
     struct TestEventGeneric2<ID, Data>
     where
         ID: 'static,

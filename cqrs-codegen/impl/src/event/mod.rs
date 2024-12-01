@@ -24,14 +24,14 @@ const ATTR_NAME: &str = "event";
 
 /// Names of the `#[event(...)]` attribute's arguments, used on structs
 /// for this family of derives.
-const VALID_STRUCT_ARGS: &[&str] = &["type", "version"];
+const VALID_STRUCT_ARGS: &[&str] = &["name", "version"];
 
 /// Names of the `#[event(...)]` attribute's arguments, used on enums
 /// for this family of derives.
 const VALID_ENUM_ARGS: &[&str] = &["aggregate"];
 
 /// Renders implementation of a `trait_path` trait as a `method` that proxies
-/// call to it's variants.
+/// call to its variants.
 ///
 /// Expects that all variants of `structure` contain exactly one field.
 /// Returns error otherwise.

@@ -19,8 +19,8 @@ watt = []
 [dependencies]
 proc-macro2 = "1.0.6"
 quote = "1.0.2"
-syn = { version = "1.0.98", features = ["full"] }
-synstructure = "0.12.3"
+syn = { version = "2.0", features = ["full"] }
+synstructure = "0.13"
 
 [patch.crates-io]
 proc-macro2 = { git = "https://github.com/dtolnay/watt" }

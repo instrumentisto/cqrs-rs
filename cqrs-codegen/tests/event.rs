@@ -6,7 +6,7 @@ use cqrs_codegen::Event;
 #[test]
 fn derives_for_struct() {
     #[derive(Default, Event)]
-    #[event(type = "test.event")]
+    #[event(name = "test.event")]
     struct TestEvent {
         id: i32,
         data: String,
@@ -19,7 +19,7 @@ fn derives_for_struct() {
 #[test]
 fn derives_for_generic_struct() {
     #[derive(Default, Event)]
-    #[event(type = "test.event.generic")]
+    #[event(name = "test.event.generic")]
     struct TestEventGeneric<ID, Data> {
         id: ID,
         data: Data,
@@ -34,11 +34,11 @@ fn derives_for_generic_struct() {
 #[test]
 fn derives_for_enum() {
     #[derive(Default, Event)]
-    #[event(type = "test.event.1")]
+    #[event(name = "test.event.1")]
     struct TestEvent1;
 
     #[derive(Default, Event)]
-    #[event(type = "test.event.2")]
+    #[event(name = "test.event.2")]
     struct TestEvent2;
 
     #[derive(Event)]
@@ -63,14 +63,14 @@ fn derives_for_enum() {
 #[test]
 fn derives_for_generic_enum() {
     #[derive(Default, Event)]
-    #[event(type = "test.event.generic.1")]
+    #[event(name = "test.event.generic.1")]
     struct TestEventGeneric1<ID, Data> {
         id: ID,
         data: Data,
     }
 
     #[derive(Default, Event)]
-    #[event(type = "test.event.generic.2")]
+    #[event(name = "test.event.generic.2")]
     struct TestEventGeneric2<ID, Data> {
         id: ID,
         data: Data,

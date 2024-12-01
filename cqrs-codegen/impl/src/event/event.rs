@@ -58,7 +58,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
 fn parse_event_type_from_nested_meta(meta: &util::Meta) -> Result<String> {
     let lit: &syn::LitStr = util::parse_lit(
         meta,
-        "type",
+        "name",
         super::VALID_STRUCT_ARGS,
         super::ATTR_NAME,
         "= \"...\"",
@@ -73,7 +73,7 @@ mod spec {
     #[test]
     fn derives_struct_impl() {
         let input = syn::parse_quote! {
-            #[event(type = "event")]
+            #[event(name = "event")]
             struct Event;
         };
 
@@ -93,12 +93,7 @@ mod spec {
             }
             #[automatically_derived]
             impl ::cqrs::TypedEvent for Event {
-                type EventTypes = std::iter::Once<::cqrs::EventType>;
-
-                #[inline(always)]
-                fn event_types() -> Self::EventTypes {
-                    std::iter::once(Self::EVENT_TYPE)
-                }
+                const EVENT_TYPES: &'static [::cqrs::EventType] = &[Self::EVENT_TYPE];
             }
         };
 
@@ -117,8 +112,7 @@ mod spec {
         };
 
         let output = quote! {
-            #[allow(non_upper_case_globals)]
-            const _DERIVE_cqrs_Event_FOR_Event: () = {
+            const _: () = {
                 #[automatically_derived]
                 impl ::cqrs::Event for Event {
                     fn event_type(&self) -> ::cqrs::EventType {
@@ -130,17 +124,18 @@ mod spec {
                 }
             };
             #[automatically_derived]
-            impl ::cqrs::TypedEvent for Event {
-                type EventTypes = std::iter::Chain<
-                    <Event1 as ::cqrs::TypedEvent>::EventTypes,
-                    <Event2 as ::cqrs::TypedEvent>::EventTypes
-                >;
-
-                #[inline(always)]
-                fn event_types() -> Self::EventTypes {
-                    Event1::event_types()
-                        .chain(Event2::event_types())
-                }
+            impl ::cqrs::TypedEvent for Event
+            where Event1: ::cqrs::TypedEvent,
+                  Event2: ::cqrs::TypedEvent
+            {
+                #[doc = "Type names of [`Event`] events."]
+                const EVENT_TYPES: &'static [::cqrs::EventType] = {
+                    ::cqrs::const_concat_slices!(
+                        ::cqrs::EventType,
+                        <Event1 as ::cqrs::TypedEvent>::EVENT_TYPES,
+                        <Event2 as ::cqrs::TypedEvent>::EVENT_TYPES
+                    )
+                };
             }
         };
 

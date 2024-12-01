@@ -112,7 +112,12 @@ mod spec {
 
         let output = quote! {
             #[automatically_derived]
-            impl ::cqrs::EventSourced<Event> for Aggregate {
+            impl ::cqrs::EventSourced<Event> for Aggregate
+            where Aggregate: ::cqrs::EventSourced<Event1>,
+                  Event1: ::cqrs::Event,
+                  Aggregate: ::cqrs::EventSourced<Event2>,
+                  Event2: ::cqrs::Event
+            {
                 fn apply(&mut self, ev: &Event) {
                     match *ev {
                         Event::Event1(ref ev,) => {{ self.apply(ev) }}

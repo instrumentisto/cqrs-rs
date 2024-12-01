@@ -131,19 +131,14 @@ mod spec {
     #[test]
     fn derives_struct_impl() {
         let input = syn::parse_quote! {
-            #[event(type = "event")]
+            #[event(name = "event")]
             struct Event;
         };
 
         let output = quote! {
             #[automatically_derived]
             impl ::cqrs::TypedEvent for Event {
-                type EventTypes = std::iter::Once<::cqrs::EventType>;
-
-                #[inline(always)]
-                fn event_types() -> Self::EventTypes {
-                    std::iter::once(Self::EVENT_TYPE)
-                }
+                const EVENT_TYPES: &'static [::cqrs::EventType] = &[Self::EVENT_TYPE];
             }
         };
 
@@ -162,21 +157,21 @@ mod spec {
 
         let output = quote! {
             #[automatically_derived]
-            impl ::cqrs::TypedEvent for Event {
-                type EventTypes = std::iter::Chain<
-                    std::iter::Chain<
-                        <MyEvent as ::cqrs::TypedEvent>::EventTypes,
-                        <HisEvent as ::cqrs::TypedEvent>::EventTypes
-                    >,
-                    <HerEvent as ::cqrs::TypedEvent>::EventTypes
-                >;
-
-                #[inline(always)]
-                fn event_types() -> Self::EventTypes {
-                    MyEvent::event_types()
-                        .chain(HisEvent::event_types())
-                        .chain(HerEvent::event_types())
-                }
+            impl ::cqrs::TypedEvent for Event
+            where
+                MyEvent: ::cqrs::TypedEvent,
+                HisEvent: ::cqrs::TypedEvent,
+                HerEvent: ::cqrs::TypedEvent
+            {
+                #[doc = "Type names of [`Event`] events."]
+                const EVENT_TYPES: &'static [::cqrs::EventType] = {
+                    ::cqrs::const_concat_slices!(
+                        ::cqrs::EventType,
+                        <MyEvent as ::cqrs::TypedEvent>::EVENT_TYPES,
+                        <HisEvent as ::cqrs::TypedEvent>::EVENT_TYPES,
+                        <HerEvent as ::cqrs::TypedEvent>::EVENT_TYPES
+                    )
+                };
             }
         };
 

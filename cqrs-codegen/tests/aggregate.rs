@@ -6,7 +6,7 @@ use cqrs_codegen::Aggregate;
 #[test]
 fn derives_for_struct_with_inferred_id_field() {
     #[derive(Default, Aggregate)]
-    #[aggregate(type = "test.aggregate")]
+    #[aggregate(name = "test.aggregate")]
     struct TestAggregate {
         id: i32,
         field: i32,
@@ -20,7 +20,7 @@ fn derives_for_struct_with_inferred_id_field() {
 #[test]
 fn derives_for_struct_with_explicit_id_field() {
     #[derive(Default, Aggregate)]
-    #[aggregate(type = "test.aggregate")]
+    #[aggregate(name = "test.aggregate")]
     struct TestAggregate {
         #[aggregate(id)]
         explicit_id: i32,
@@ -35,7 +35,7 @@ fn derives_for_struct_with_explicit_id_field() {
 #[test]
 fn derives_for_struct_with_redundantly_explicit_id_field() {
     #[derive(Default, Aggregate)]
-    #[aggregate(type = "test.aggregate")]
+    #[aggregate(name = "test.aggregate")]
     struct TestAggregate {
         #[aggregate(id)]
         id: i32,
@@ -50,7 +50,7 @@ fn derives_for_struct_with_redundantly_explicit_id_field() {
 #[test]
 fn derives_for_tuple_struct_with_explicit_id_field() {
     #[derive(Default, Aggregate)]
-    #[aggregate(type = "test.aggregate")]
+    #[aggregate(name = "test.aggregate")]
     struct TestAggregate(#[aggregate(id)] i32, i32);
 
     assert_eq!(TestAggregate::AGGREGATE_TYPE, "test.aggregate");
@@ -61,7 +61,7 @@ fn derives_for_tuple_struct_with_explicit_id_field() {
 #[test]
 fn derives_for_generic_struct_with_inferred_id_field() {
     #[derive(Default, Aggregate)]
-    #[aggregate(type = "test.aggregate")]
+    #[aggregate(name = "test.aggregate")]
     struct TestAggregate<T: Default> {
         id: T,
         field: T,
@@ -78,7 +78,7 @@ fn derives_for_generic_struct_with_inferred_id_field() {
 #[test]
 fn derives_for_generic_struct_with_explicit_id_field() {
     #[derive(Default, Aggregate)]
-    #[aggregate(type = "test.aggregate")]
+    #[aggregate(name = "test.aggregate")]
     struct TestAggregate<T: Default> {
         #[aggregate(id)]
         explicit_id: T,
@@ -96,7 +96,7 @@ fn derives_for_generic_struct_with_explicit_id_field() {
 #[test]
 fn derives_for_generic_struct_with_redundantly_explicit_id_field() {
     #[derive(Default, Aggregate)]
-    #[aggregate(type = "test.aggregate")]
+    #[aggregate(name = "test.aggregate")]
     struct TestAggregate<T: Default> {
         #[aggregate(id)]
         id: T,
@@ -114,7 +114,7 @@ fn derives_for_generic_struct_with_redundantly_explicit_id_field() {
 #[test]
 fn derives_for_generic_tuple_struct_with_explicit_id_field() {
     #[derive(Default, Aggregate)]
-    #[aggregate(type = "test.aggregate")]
+    #[aggregate(name = "test.aggregate")]
     struct TestAggregate<T: Default = ()>(#[aggregate(id)] T, T);
 
     assert_eq!(TestAggregate::<i32>::AGGREGATE_TYPE, "test.aggregate");
@@ -128,7 +128,7 @@ fn derives_for_generic_tuple_struct_with_explicit_id_field() {
 #[test]
 fn derives_for_struct_with_const_generic_parameters() {
     #[derive(Default, Aggregate)]
-    #[aggregate(type = "test.aggregate")]
+    #[aggregate(name = "test.aggregate")]
     struct TestAggregate<const T: u8 = 0>(#[aggregate(id)] i32);
 
     assert_eq!(TestAggregate::<1>::AGGREGATE_TYPE, "test.aggregate");

@@ -76,8 +76,7 @@ mod spec {
         };
 
         let output = quote! {
-            #[allow(non_upper_case_globals)]
-            const _DERIVE_cqrs_RegisteredEvent_FOR_Event: () = {
+            const _: () = {
                 #[automatically_derived]
                 impl ::cqrs::RegisteredEvent for Event {
                     fn type_id(&self) -> ::core::any::TypeId {
