@@ -191,6 +191,13 @@ impl EventVersion {
         // TODO: use safety guard for debug assertion
         Self(NonZeroU8::new_unchecked(n))
     }
+
+    /// Converts this [`EventVersion`] into its [`u8`] representation.
+    #[inline]
+    #[must_use]
+    pub const fn into_u8(self) -> u8 {
+        self.0.get()
+    }
 }
 
 impl fmt::Display for EventVersion {
