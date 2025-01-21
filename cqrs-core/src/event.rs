@@ -31,13 +31,13 @@ pub trait Event {
 /// State that can be calculated by applying specified [`Event`].
 ///
 /// Usually, implemented by an [`Aggregate`].
-pub trait EventSourced<Ev: Event + ?Sized> {
+pub trait EventSourced<Ev: ?Sized> {
     /// Applies given [`Event`] to the current state.
     fn apply(&mut self, event: &Ev);
 }
 
 /// [`Event`] (or a set of them) providing its [`EventType`].
-pub trait TypedEvent: Event {
+pub trait TypedEvent {
     /// All available types of this [`Event`].
     const EVENT_TYPES: &'static [EventType];
 }
@@ -50,7 +50,7 @@ pub trait TypedEvent: Event {
 /// version of [`Event`] to implement trait [`From`] its previous versions, so
 /// they can be automatically transformed into the latest actual version of
 /// [`Event`].
-pub trait VersionedEvent: Event {
+pub trait VersionedEvent {
     /// Returns [`Event`]'s version.
     ///
     /// _Note:_ This should effectively be a constant value, and should never
@@ -106,7 +106,6 @@ impl<'a, Ev, Mt> From<&'a NumberedEventWithMeta<Ev, Mt>> for NumberedEvent<&'a E
 pub trait EventSource<Agg, Ev>
 where
     Agg: Aggregate + EventSourced<Ev>,
-    Ev: Event,
 {
     /// Type of the error if reading [`NumberedEvent`]s fails.
     /// If it never fails, consider to specify [`Infallible`].

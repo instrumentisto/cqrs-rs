@@ -83,9 +83,9 @@ pub trait CommandBus<Cmd: Command> {
         Cmd: 'async_trait;
 }
 
-pub trait DomainEvent: Event {}
+pub trait DomainEvent {}
 
-pub trait AggregateEvent: TypedEvent {
+pub trait AggregateEvent {
     type Aggregate: Aggregate;
 }
 
