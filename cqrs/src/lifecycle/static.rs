@@ -87,7 +87,6 @@ impl<Snp, Ctx> Static<Snp, Ctx> {
     ) -> Result<(), EvSrc::Err>
     where
         Agg: Aggregate + EventSourced<Ev>,
-        Ev: Event,
         EvSrc: EventSource<Agg, Ev> + ?Sized,
         Ctx: AsRef<EvSrc>,
     {
@@ -103,7 +102,6 @@ impl<Snp, Ctx> Static<Snp, Ctx> {
     ) -> Result<Option<HydratedAggregate<Agg>>, LoadError<SsSrc::Err, EvSrc::Err>>
     where
         Agg: Aggregate + EventSourced<Ev>,
-        Ev: Event,
         SsSrc: SnapshotSource<Agg> + ?Sized,
         EvSrc: EventSource<Agg, Ev> + ?Sized,
         Ctx: AsRef<SsSrc> + AsRef<EvSrc>,
@@ -120,7 +118,6 @@ impl<Snp, Ctx> Static<Snp, Ctx> {
     ) -> Result<Vec<HydratedAggregate<Agg>>, LoadError<SsSrc::Err, EvSrc::Err>>
     where
         Agg: Aggregate + EventSourced<Ev>,
-        Ev: Event,
         SsSrc: SnapshotSource<Agg> + ?Sized,
         EvSrc: EventSource<Agg, Ev> + ?Sized,
         Ctx: AsRef<SsSrc> + AsRef<EvSrc>,
@@ -172,7 +169,6 @@ where
     ) -> Result<(), LoadRehydrateAndPersistError<SsSrc::Err, EvSrc::Err, SsSnk::Err>>
     where
         Agg: Aggregate + EventSourced<Ev>,
-        Ev: Event,
         SsSrc: SnapshotSource<Agg> + ?Sized,
         EvSrc: EventSource<Agg, Ev> + ?Sized,
         SsSnk: SnapshotSink<Agg> + ?Sized,
@@ -190,7 +186,6 @@ where
     ) -> Result<(), LoadRehydrateAndPersistError<SsSrc::Err, EvSrc::Err, SsSnk::Err>>
     where
         Agg: Aggregate + EventSourced<Ev>,
-        Ev: Event,
         SsSrc: SnapshotSource<Agg> + ?Sized,
         EvSrc: EventSource<Agg, Ev> + ?Sized,
         SsSnk: SnapshotSink<Agg> + ?Sized,
@@ -215,7 +210,7 @@ where
     ) -> Result<(), PersistError<EvSnk::Err, SsSnk::Err>>
     where
         Agg: Aggregate + EventSourced<Ev>,
-        Ev: Event + 'static,
+        Ev: 'static,
         Evs: AsRef<[NumberedEvent<Ev>]>,
         Mt: ?Sized,
         EvSnk: EventSink<Agg, Ev, Mt> + ?Sized,
@@ -246,7 +241,7 @@ where
     where
         Cmd: Command,
         Cmd::Aggregate: CommandHandler<Cmd> + EventSourced<CommandHandlerEvent<Cmd>>,
-        CommandHandlerEvent<Cmd>: Event + 'static,
+        CommandHandlerEvent<Cmd>: 'static,
         CommandHandlerOk<Cmd>: AsRef<[NumberedEvent<CommandHandlerEvent<Cmd>>]> + 'static,
         Mt: ?Sized,
         EvSnk: EventSink<Cmd::Aggregate, CommandHandlerEvent<Cmd>, Mt> + ?Sized,
@@ -285,7 +280,7 @@ where
     where
         Cmd: Command,
         Cmd::Aggregate: CommandHandler<Cmd> + EventSourced<CommandHandlerEvent<Cmd>>,
-        CommandHandlerEvent<Cmd>: Event + 'static,
+        CommandHandlerEvent<Cmd>: 'static,
         CommandHandlerOk<Cmd>: AsRef<[NumberedEvent<CommandHandlerEvent<Cmd>>]> + 'static,
         Mt: ?Sized,
         SsSrc: SnapshotSource<Cmd::Aggregate> + ?Sized,
@@ -319,7 +314,7 @@ where
     ) -> Result<(), PersistError<EvSnk::Err, SsSnk::Err>>
     where
         Agg: Aggregate + EventSourced<Ev>,
-        Ev: Event + 'static,
+        Ev: 'static,
         Evs: AsRef<[NumberedEvent<Ev>]>,
         EvSnk: EventSink<Agg, Ev, Mt> + ?Sized,
         SsSnk: SnapshotSink<Agg> + ?Sized,
@@ -348,7 +343,7 @@ where
     where
         Cmd: Command,
         Cmd::Aggregate: CommandHandler<Cmd> + EventSourced<CommandHandlerEvent<Cmd>>,
-        CommandHandlerEvent<Cmd>: Event + 'static,
+        CommandHandlerEvent<Cmd>: 'static,
         CommandHandlerOk<Cmd>: AsRef<[NumberedEvent<CommandHandlerEvent<Cmd>>]> + 'static,
         EvSnk: EventSink<Cmd::Aggregate, CommandHandlerEvent<Cmd>, Mt> + ?Sized,
         SsSnk: SnapshotSink<Cmd::Aggregate> + ?Sized,
@@ -385,7 +380,7 @@ where
     where
         Cmd: Command,
         Cmd::Aggregate: CommandHandler<Cmd> + EventSourced<CommandHandlerEvent<Cmd>>,
-        CommandHandlerEvent<Cmd>: Event + 'static,
+        CommandHandlerEvent<Cmd>: 'static,
         CommandHandlerOk<Cmd>: AsRef<[NumberedEvent<CommandHandlerEvent<Cmd>>]> + 'static,
         SsSrc: SnapshotSource<Cmd::Aggregate> + ?Sized,
         EvSrc: EventSource<Cmd::Aggregate, CommandHandlerEvent<Cmd>> + ?Sized,
@@ -432,7 +427,7 @@ where
     Snp: SnapshotStrategy,
     Cmd: Command,
     Cmd::Aggregate: CommandHandler<Cmd> + EventSourced<CommandHandlerEvent<Cmd>>,
-    CommandHandlerEvent<Cmd>: Event + 'static,
+    CommandHandlerEvent<Cmd>: 'static,
     CommandHandlerOk<Cmd>: AsRef<[NumberedEvent<CommandHandlerEvent<Cmd>>]> + 'static,
     Impl: SnapshotSource<Cmd::Aggregate>
         + EventSource<Cmd::Aggregate, CommandHandlerEvent<Cmd>>
@@ -480,7 +475,7 @@ where
     Mt: 'a,
     Cmd: Command,
     Cmd::Aggregate: CommandHandler<Cmd> + EventSourced<CommandHandlerEvent<Cmd>>,
-    CommandHandlerEvent<Cmd>: Event + 'static,
+    CommandHandlerEvent<Cmd>: 'static,
     CommandHandlerOk<Cmd>: AsRef<[NumberedEvent<CommandHandlerEvent<Cmd>>]> + 'static,
     Impl: SnapshotSource<Cmd::Aggregate>
         + EventSource<Cmd::Aggregate, CommandHandlerEvent<Cmd>>

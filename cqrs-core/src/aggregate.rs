@@ -175,7 +175,7 @@ impl<Agg> HydratedAggregate<Agg> {
     pub fn apply<'a, Ev, IntoEv>(&mut self, event: IntoEv)
     where
         IntoEv: Into<NumberedEvent<&'a Ev>>,
-        Ev: Event + 'a,
+        Ev: 'a,
         Agg: EventSourced<Ev>,
     {
         let e = event.into();
@@ -190,7 +190,7 @@ impl<Agg> HydratedAggregate<Agg> {
     where
         Iter: IntoIterator<Item = IntoEv>,
         IntoEv: Into<NumberedEvent<&'a Ev>>,
-        Ev: Event + 'a,
+        Ev: 'a,
         Agg: EventSourced<Ev>,
     {
         for event in events {

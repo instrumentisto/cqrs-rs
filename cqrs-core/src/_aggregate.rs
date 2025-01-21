@@ -7,21 +7,17 @@ use crate::{
 };
 
 /// An iterable and sliceable list of events.
-pub trait Events<E>: IntoIterator<Item = E> + AsRef<[E]>
-where
-    E: Event,
-{
+pub trait Events<E>: IntoIterator<Item = E> + AsRef<[E]> {
 }
 
 impl<T, E> Events<E> for T
 where
     T: IntoIterator<Item = E> + AsRef<[E]>,
-    E: Event,
 {
 }
 
 /// An event that can be serialized to a buffer.
-pub trait SerializableEvent: Event {
+pub trait SerializableEvent {
     /// The error type.
     type Error: CqrsError;
 
@@ -30,7 +26,7 @@ pub trait SerializableEvent: Event {
 }
 
 /// An event that can be deserialized from a buffer.
-pub trait DeserializableEvent: Event + Sized {
+pub trait DeserializableEvent: Sized {
     /// The error type.
     type Error: CqrsError;
 

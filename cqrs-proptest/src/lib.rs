@@ -171,7 +171,7 @@ use std::{fmt, marker::PhantomData};
 ///     .unwrap()
 ///     .current();
 /// ```
-pub fn arb_events<E: Event + fmt::Debug>(
+pub fn arb_events<E: fmt::Debug>(
     event_strategy: impl Strategy<Value = E>,
     size: impl Into<prop::collection::SizeRange>,
 ) -> impl Strategy<Value = Vec<E>> {
