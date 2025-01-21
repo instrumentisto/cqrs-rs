@@ -34,16 +34,6 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
     let structure = Structure::try_new(&input)?;
     util::assert_all_enum_variants_have_single_field(&structure, TRAIT_NAME)?;
 
-    let type_params: HashSet<_> = input
-        .generics
-        .params
-        .iter()
-        .filter_map(|generic_param| match generic_param {
-            syn::GenericParam::Type(type_param) => Some(&type_param.ident),
-            _ => None,
-        })
-        .collect();
-
     let iter = structure
         .variants()
         .iter()
@@ -66,7 +56,11 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
         // type-path cannot ever be empty, unless there is an error in syn
         let first_segment = path.segments.first().unwrap();
 
-        if type_params.contains(&first_segment.ident) {
+        let is_generic = input.generics.params.iter().any(|p| match p {
+            syn::GenericParam::Type(p) => p.ident == first_segment.ident,
+            syn::GenericParam::Const(_) | syn::GenericParam::Lifetime(_) => false,
+        });
+        if is_generic {
             return Err(Error::new(
                 first_segment.ident.span(),
                 "Type parameters are not allowed here, as they cannot have \
@@ -104,8 +98,20 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
 
     // TODO: Remove this once generics are supported in const contexts.
     //       https://github.com/instrumentisto/cqrs-rs/pull/21#issuecomment-1257982811
-    let type_params = type_params.into_iter().collect::<Vec<_>>();
-    let type_params = quote!(#( type #type_params = (); )*);
+    let fake_params = input.generics.params.iter().filter_map(|p| match p {
+        syn::GenericParam::Const(p) => {
+            let ident = &p.ident;
+            let ty = &p.ty;
+            // We can use `0` here, because only numeric types are allowed
+            // as const generics.
+            Some(quote! { const #ident: #ty = 0; })
+        },
+        syn::GenericParam::Lifetime(_) => None,
+        syn::GenericParam::Type(p) => {
+            let ident = &p.ident;
+            Some(quote! { type #ident = (); })
+        },
+    });
 
     let subtypes = types
         .iter()
@@ -117,7 +123,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
         impl#impl_generics ::cqrs::TypedEvent for #type_name#ty_generics #where_clause {
             #[doc = #const_doc]
             const EVENT_TYPES: &'static [::cqrs::EventType] = {
-                #type_params
+                #( #fake_params )*
                 ::cqrs::const_concat_slices!(::cqrs::EventType, #( #subtypes ),*)
             };
         }
