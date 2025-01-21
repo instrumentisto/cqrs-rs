@@ -62,7 +62,7 @@ impl<'a, 'b, F, Fut, Ev, Ctx, Err> EventHandler<Ev> for EventHandlerTryFn<'a, 'b
 where
     F: Fn(&'a Ev, &'b Ctx) -> Fut,
     Fut: Future<Output = Result<(), Err>>,
-    Ev: Event + ?Sized + 'a,
+    Ev: ?Sized + 'a,
     Ctx: ?Sized + 'b,
     Err: 'static,
 {
@@ -75,7 +75,7 @@ where
     }
 }
 
-async fn some<Ev: Event + ?Sized>(ev: &Ev, ctx: &()) -> Result<(), std::convert::Infallible> {
+async fn some<Ev: ?Sized>(ev: &Ev, ctx: &()) -> Result<(), std::convert::Infallible> {
     Ok(())
 }
 
@@ -92,12 +92,12 @@ fn test_some() {
 fn assert_is_event_handler<T, Ev>(_: T)
 where
     T: EventHandler<Ev>,
-    Ev: Event + ?Sized,
+    Ev: ?Sized,
 {
 }
 */
 
-pub trait RegisteredEvent: Event + 'static {
+pub trait RegisteredEvent: 'static {
     #[inline]
     fn type_id(&self) -> TypeId;
 }
@@ -147,9 +147,9 @@ impl EventProcessingConfigurationBuilder {
     #[inline]
     pub fn register_event_handler<Ev, AsEv, Ctx, Err, H>(&mut self, handler: H)
     where
-        Ev: Event + ?Sized + 'static,
+        Ev: ?Sized + 'static,
         for<'e> &'e Ev: TryFrom<&'e AsEv>,
-        AsEv: Event + ?Sized + 'static,
+        AsEv: ?Sized + 'static,
         Ctx: AsRef<H::Context> + ?Sized + 'static,
         Err: From<H::Err> + 'static,
         H: EventHandler<Ev> + Send + Sync + 'static,
@@ -168,9 +168,9 @@ sa::assert_impl_all!(EventHandlersRegistry: Send, Sync);
 impl EventHandlersRegistry {
     fn register<Ev, AsEv, Ctx, Err, H>(&mut self, handler: H)
     where
-        Ev: Event + ?Sized + 'static,
+        Ev: ?Sized + 'static,
         for<'e> &'e Ev: TryFrom<&'e AsEv>,
-        AsEv: Event + ?Sized + 'static,
+        AsEv: ?Sized + 'static,
         Ctx: AsRef<H::Context> + ?Sized + 'static,
         Err: From<H::Err> + 'static,
         H: EventHandler<Ev> + Send + Sync + 'static,
@@ -239,7 +239,7 @@ sa::assert_impl_all!(DynEventHandler<u8, std::env::Args, std::env::Args>: Send, 
 #[async_trait(?Send)]
 impl<Ev, Ctx, Err> EventHandler<Ev> for DynEventHandler<Ev, Ctx, Err>
 where
-    Ev: Event + ?Sized,
+    Ev: ?Sized,
     Ctx: ?Sized,
 {
     type Context = Ctx;
@@ -269,9 +269,9 @@ sa::assert_impl_all!(
 #[async_trait(?Send)]
 impl<AsEv, H, Ev, Ctx, Err> EventHandler<AsEv> for RawEventHandler<H, Ev, Ctx, Err>
 where
-    AsEv: Event + ?Sized,
+    AsEv: ?Sized,
     H: EventHandler<Ev>,
-    Ev: Event + ?Sized,
+    Ev: ?Sized,
     for<'e> &'e Ev: TryFrom<&'e AsEv>,
     Ctx: AsRef<H::Context> + ?Sized,
     Err: From<H::Err>,
@@ -297,9 +297,9 @@ where
 
 pub trait EventHandlersRegistrar<Ev, AsEv, Ctx, Err>
 where
-    Ev: Event + ?Sized + 'static,
+    Ev: ?Sized + 'static,
     for<'e> &'e Ev: TryFrom<&'e AsEv>,
-    AsEv: Event + ?Sized + 'static,
+    AsEv: ?Sized + 'static,
     Ctx: ?Sized + 'static,
     Err: 'static,
 {
