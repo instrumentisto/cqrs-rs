@@ -76,7 +76,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
             args.colon2_token = Some(Default::default());
         }
 
-        types.push(quote!(#path));
+        types.push(path);
     }
 
     let const_doc = format!("Type names of [`{}`] events.", input.ident);
@@ -98,15 +98,41 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
 
     let subtypes = types
         .iter()
-        .map(|ty| quote!(<#ty as ::cqrs::TypedEvent>::EVENT_TYPES))
+        .map(|ty| quote! { <#ty as ::cqrs::TypedEvent>::EVENT_TYPES })
         .collect::<Vec<_>>();
+
+    let len = quote! {
+        0 #(+ #subtypes.len())*
+    };
 
     Ok(quote! {
         #[automatically_derived]
         impl#impl_generics ::cqrs::TypedEvent for #type_name#ty_generics #where_clause {
             #[doc = #const_doc]
             const EVENT_TYPES: &'static [::cqrs::EventType] = {
-                ::cqrs::const_concat_slices!(#( #subtypes ),*)
+                ::cqrs::private::slice_arr(
+                    &const {
+                        const __LEN: usize = 64;
+                        if #len > __LEN {
+                            panic!("`cqrs::TypedEvent::EVENT_TYPES` limit reached");
+                        }
+
+                        let mut out = [""; __LEN];
+                        let len = 0;
+
+                        #({
+                            let mut i = 0;
+                            while i < #subtypes.len() {
+                                out[len] = #subtypes[i];
+                                i += 1;
+                                len += 1;
+                            }
+                        })*
+
+                        out
+                    },
+                    #len,
+                )
             };
         }
     })
