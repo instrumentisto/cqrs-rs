@@ -46,7 +46,7 @@ macro_rules! const_concat_slices {
     ($ty:ty, $a:expr, $b:expr $(,)*) => {
         $crate::private::slice_arr(
             &const {
-                const __LEN: usize = 255;
+                const __LEN: usize = 32;
                 let mut out = [""; __LEN];
                 let mut i = 0;
                 while i < $a.len() {
