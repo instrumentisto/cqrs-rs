@@ -2,7 +2,7 @@
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::Result;
+use syn::{parse_quote, spanned::Spanned as _, Error, Result};
 use synstructure::Structure;
 
 use crate::{event::typed_event, util};
@@ -43,15 +43,50 @@ fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
 fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
     util::assert_valid_attr_args_used(&input.attrs, super::ATTR_NAME, super::VALID_ENUM_ARGS)?;
 
-    let mut structure = Structure::try_new(&input)?;
+    let structure = Structure::try_new(&input)?;
+    util::assert_all_enum_variants_have_single_field(&structure, TRAIT_NAME)?;
 
-    super::render_enum_proxy_method_calls(
-        &mut structure,
-        TRAIT_NAME,
-        quote!(::cqrs::Event),
-        quote!(event_type),
-        quote!(::cqrs::EventType),
-    )
+    let syn::Data::Enum(data) = input.data else {
+        unreachable!("already checked")
+    };
+
+    let type_name = &input.ident;
+
+    let mut where_clause = input
+        .generics
+        .where_clause
+        .clone()
+        .unwrap_or_else(|| parse_quote!(where));
+    for v in &data.variants {
+        let ty = &v.fields.iter().next().expect("already checked").ty;
+        where_clause
+            .predicates
+            .push(parse_quote!(#ty: ::cqrs::Event));
+    }
+
+    let variant = data.variants.iter().map(|v| {
+        let ident = &v.ident;
+        let field = &v.fields.iter().next().expect("already checked");
+        if field.ident.is_some() {
+            quote! { Self::#ident { #field: ref ev } => ev.event_type() }
+        } else {
+            quote! { Self::#ident(ref ev) => ev.event_type() }
+        }
+    });
+
+    let (impl_generics, ty_generics, _) = input.generics.split_for_impl();
+
+    Ok(quote! {
+        impl #impl_generics ::cqrs::Event for #type_name #ty_generics
+        #where_clause
+        {
+            fn event_type(&self) -> ::cqrs::EventType {
+                match *self {
+                    #( Self::#variant(ref ev) => ev.event_type(), )*
+                }
+            }
+        }
+    })
 }
 
 /// Parses type of [`cqrs::Event`] from `#[event(...)]` attribute.
