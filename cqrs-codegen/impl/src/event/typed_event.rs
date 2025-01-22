@@ -106,7 +106,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
         impl#impl_generics ::cqrs::TypedEvent for #type_name#ty_generics #where_clause {
             #[doc = #const_doc]
             const EVENT_TYPES: &'static [::cqrs::EventType] = {
-                ::cqrs::const_concat_slices!(::cqrs::EventType, #( #subtypes ),*)
+                ::cqrs::const_concat_slices!(#( #subtypes ),*)
             };
         }
     })

@@ -42,11 +42,15 @@ pub type LocalBoxTryStream<'a, I, E> = Pin<Box<dyn Stream<Item = Result<I, E>> +
 /// Concatenates slices at compile time.
 #[macro_export]
 macro_rules! const_concat_slices {
-    ($ty:ty, $a:expr) => {$a};
-    ($ty:ty, $a:expr, $b:expr $(,)*) => {
+    ($a:expr) => {$a};
+    ($a:expr, $b:expr $(,)*) => {
         $crate::private::slice_arr(
             &const {
                 const __LEN: usize = 32;
+                if $a.len() + $b.len() > __LEN {
+                    compile_error!("concatenated slices exceed maximum length");
+                }
+
                 let mut out = [""; __LEN];
                 let mut i = 0;
                 while i < $a.len() {
@@ -63,11 +67,10 @@ macro_rules! const_concat_slices {
             $a.len() + $b.len(),
         )
     };
-    ($ty:ty, $a:expr, $b:expr, $($c:expr),+ $(,)*) => {
+    ($a:expr, $b:expr, $($c:expr),+ $(,)*) => {
         $crate::const_concat_slices!(
-            $ty,
             $a,
-            $crate::const_concat_slices!($ty, $b, $($c),+)
+            $crate::const_concat_slices!($b, $($c),+)
         )
     };
 }
