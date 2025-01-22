@@ -82,7 +82,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
         {
             fn event_type(&self) -> ::cqrs::EventType {
                 match *self {
-                    #( Self::#variant(ref ev) => ev.event_type(), )*
+                    #( #variant, )*
                 }
             }
         }
