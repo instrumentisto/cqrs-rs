@@ -118,7 +118,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
                         }
 
                         let mut out = [""; __LEN];
-                        let len = 0;
+                        let mut len = 0;
 
                         #({
                             let mut i = 0;
