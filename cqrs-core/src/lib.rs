@@ -46,7 +46,7 @@ macro_rules! const_concat_slices {
     ($a:expr, $b:expr $(,)*) => {
         $crate::private::slice_arr(
             &const {
-                const __LEN: usize = 255;
+                const __LEN: usize = 512;
                 if $a.len() + $b.len() > __LEN {
                     compile_error!("concatenated slices exceed maximum length");
                 }
