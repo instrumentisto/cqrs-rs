@@ -43,37 +43,26 @@ pub type LocalBoxTryStream<'a, I, E> = Pin<Box<dyn Stream<Item = Result<I, E>> +
 #[macro_export]
 macro_rules! const_concat_slices {
     ($ty:ty, $a:expr) => {$a};
-    ($ty:ty, $a:expr, $b:expr $(,)*) => {{
-        const A: &[$ty] = $a;
-        const B: &[$ty] = $b;
-        const __LEN: usize = A.len() + B.len();
-        const __CONCATENATED: &[$ty; __LEN] = &{
-            let mut out: [$ty; __LEN] = if __LEN == 0 {
-                unsafe {
-                    ::core::mem::transmute(
-                        [0u8; ::core::mem::size_of::<$ty>() * __LEN],
-                    )
+    ($ty:ty, $a:expr, $b:expr $(,)*) => {
+        $crate::private::slice_arr(
+            &const {
+                const __LEN: usize = 255;
+                let mut out = [""; __LEN];
+                let mut i = 0;
+                while i < $a.len() {
+                    out[i] = $a[i];
+                    i += 1;
                 }
-            } else if A.len() == 0 {
-                [B[0]; { A.len() + B.len() }]
-            } else {
-                [A[0]; { A.len() + B.len() }]
-            };
-            let mut i = 0;
-            while i < A.len() {
-                out[i] = A[i];
-                i += 1;
-            }
-            i = 0;
-            while i < B.len() {
-                out[i + A.len()] = B[i];
-                i += 1;
-            }
-            out
-        };
-
-        __CONCATENATED
-    }};
+                i = 0;
+                while i < $b.len() {
+                    out[i + $a.len()] = $b[i];
+                    i += 1;
+                }
+                out
+            },
+            $a.len() + $b.len(),
+        )
+    };
     ($ty:ty, $a:expr, $b:expr, $($c:expr),+ $(,)*) => {
         $crate::const_concat_slices!(
             $ty,
@@ -81,4 +70,16 @@ macro_rules! const_concat_slices {
             $crate::const_concat_slices!($ty, $b, $($c),+)
         )
     };
+}
+
+#[doc(hidden)]
+pub mod private {
+    /// Slices an array of strings at compile time.
+    pub const fn slice_arr<const N: usize>(
+        arr: &'static [&'static str; N],
+        at: usize,
+    ) -> &'static [&'static str] {
+        #[allow(unsafe_code, reason = "macro internals")]
+        unsafe { std::slice::from_raw_parts(arr.as_ptr(), at) }
+    }
 }
