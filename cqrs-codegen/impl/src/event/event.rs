@@ -77,6 +77,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
     let (impl_generics, ty_generics, _) = input.generics.split_for_impl();
 
     Ok(quote! {
+        #[automatically_derived]
         impl #impl_generics ::cqrs::Event for #type_name #ty_generics
         #where_clause
         {
