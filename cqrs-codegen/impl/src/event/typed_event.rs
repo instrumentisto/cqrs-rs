@@ -112,7 +112,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
             const EVENT_TYPES: &'static [::cqrs::EventType] = {
                 ::cqrs::private::slice_arr(
                     &const {
-                        const __LEN: usize = 64;
+                        const __LEN: usize = 128;
                         if #len > __LEN {
                             panic!("`cqrs::TypedEvent::EVENT_TYPES` limit reached");
                         }
