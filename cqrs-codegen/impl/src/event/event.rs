@@ -2,7 +2,7 @@
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_quote, spanned::Spanned as _, Error, Result};
+use syn::{parse_quote, Result};
 use synstructure::Structure;
 
 use crate::{event::typed_event, util};
@@ -14,7 +14,6 @@ const TRAIT_NAME: &str = "Event";
 pub fn derive(input: syn::DeriveInput) -> Result<TokenStream> {
     let mut s = util::derive(input.clone(), TRAIT_NAME, derive_struct, derive_enum)?;
     s.extend(typed_event::derive(input)?);
-    panic!("{}", s);
     Ok(s)
 }
 
@@ -85,8 +84,8 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
     let variant = data.variants.iter().map(|v| {
         let ident = &v.ident;
         let field = &v.fields.iter().next().expect("already checked");
-        if field.ident.is_some() {
-            quote! { Self::#ident { #field: ref ev } => ev.event_type() }
+        if let Some(field_ident) = &field.ident {
+            quote! { Self::#ident { #field_ident: ref ev } => ev.event_type() }
         } else {
             quote! { Self::#ident(ref ev) => ev.event_type() }
         }
