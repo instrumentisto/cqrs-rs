@@ -114,11 +114,8 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
                     &const {
                         const __LEN: usize = 128;
                         if #len > __LEN {
-                            panic!(
-                                "`cqrs::TypedEvent::EVENT_TYPES` limit reached: \
-                                 {} > {__LEN}",
-                                #len,
-                            );
+                            panic!("`cqrs::TypedEvent::EVENT_TYPES` limit \
+                                    reached: 128");
                         }
 
                         let mut out = [""; __LEN];
