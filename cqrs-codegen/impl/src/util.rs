@@ -1,7 +1,5 @@
 //! Common crate utils used for codegen.
 
-use std::collections::HashSet;
-
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{punctuated::Punctuated, spanned::Spanned, Error, Result};

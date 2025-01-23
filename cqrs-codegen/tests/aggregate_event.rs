@@ -27,8 +27,11 @@ fn derives_for_enum() {
     }
 
     assert_eq!(
-        TestEvent::EVENT_TYPES,
-        &[TestEvent1::EVENT_TYPE, TestEvent2::EVENT_TYPE],
+        <TestEvent as cqrs::TypedEvent>::EVENT_TYPES,
+        &[
+            <TestEvent1 as cqrs::StaticTypedEvent>::EVENT_TYPE,
+            <TestEvent2 as cqrs::StaticTypedEvent>::EVENT_TYPE
+        ],
     );
 }
 
@@ -68,12 +71,12 @@ fn derives_for_generic_enum() {
     type TestEvent = TestEventGeneric<i32, String>;
 
     assert_eq!(
-        TestEvent::EVENT_TYPES,
+        <TestEvent as cqrs::TypedEvent>::EVENT_TYPES,
         &[
-            TestEvent1::EVENT_TYPE,
-            TestEvent2::EVENT_TYPE,
-            TestEventGeneric1::<i32, String>::EVENT_TYPE,
-            TestEventGeneric2::<i32, String>::EVENT_TYPE,
+            <TestEvent1 as cqrs::StaticTypedEvent>::EVENT_TYPE,
+            <TestEvent2 as cqrs::StaticTypedEvent>::EVENT_TYPE,
+            <TestEventGeneric1::<i32, String> as cqrs::StaticTypedEvent>::EVENT_TYPE,
+            <TestEventGeneric2::<i32, String> as cqrs::StaticTypedEvent>::EVENT_TYPE,
         ],
     );
 }

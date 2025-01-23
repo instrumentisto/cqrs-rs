@@ -1,7 +1,5 @@
 //! Codegen for [`cqrs::EventSourced`].
 
-use std::collections::HashSet;
-
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{punctuated::Punctuated, spanned::Spanned as _, Error, Result};
