@@ -109,12 +109,16 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
         #[automatically_derived]
         impl#impl_generics ::cqrs::TypedEvent for #type_name#ty_generics #where_clause {
             #[doc = #const_doc]
-            const EVENT_TYPES: &'static [::cqrs::EventType] = {
+            const EVENT_TYPES: &'static [::cqrs::EventType] =
                 ::cqrs::private::slice_arr(
                     &const {
                         const __LEN: usize = 128;
                         if #len > __LEN {
-                            panic!("`cqrs::TypedEvent::EVENT_TYPES` limit reached");
+                            panic!(
+                                "`cqrs::TypedEvent::EVENT_TYPES` limit reached: \
+                                 {} > {__LEN}",
+                                #len,
+                            );
                         }
 
                         let mut out = [""; __LEN];
@@ -132,8 +136,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
                         out
                     },
                     #len,
-                )
-            };
+                );
         }
     })
 }
