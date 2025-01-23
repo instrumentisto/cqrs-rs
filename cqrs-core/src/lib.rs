@@ -39,46 +39,19 @@ pub use self::{aggregate::*, command::*, event::*};
 /// Helper alias for pin-boxed `?Send` [`Stream`] which yields [`Result`]s.
 pub type LocalBoxTryStream<'a, I, E> = Pin<Box<dyn Stream<Item = Result<I, E>> + 'a>>;
 
-/// Concatenates slices at compile time.
-#[macro_export]
-macro_rules! const_concat_slices {
-    ($ty:ty, $a:expr) => {$a};
-    ($ty:ty, $a:expr, $b:expr $(,)*) => {{
-        const A: &[$ty] = $a;
-        const B: &[$ty] = $b;
-        const __LEN: usize = A.len() + B.len();
-        const __CONCATENATED: &[$ty; __LEN] = &{
-            let mut out: [$ty; __LEN] = if __LEN == 0 {
-                unsafe {
-                    ::core::mem::transmute(
-                        [0u8; ::core::mem::size_of::<$ty>() * __LEN],
-                    )
-                }
-            } else if A.len() == 0 {
-                [B[0]; { A.len() + B.len() }]
-            } else {
-                [A[0]; { A.len() + B.len() }]
-            };
-            let mut i = 0;
-            while i < A.len() {
-                out[i] = A[i];
-                i += 1;
-            }
-            i = 0;
-            while i < B.len() {
-                out[i + A.len()] = B[i];
-                i += 1;
-            }
-            out
-        };
-
-        __CONCATENATED
-    }};
-    ($ty:ty, $a:expr, $b:expr, $($c:expr),+ $(,)*) => {
-        $crate::const_concat_slices!(
-            $ty,
-            $a,
-            $crate::const_concat_slices!($ty, $b, $($c),+)
-        )
-    };
+#[doc(hidden)]
+pub mod private {
+    /// Slices an array of strings at compile time.
+    pub const fn slice_arr<const N: usize>(
+        arr: &'static [&'static str; N],
+        at: usize,
+    ) -> &'static [&'static str] {
+        if at > N {
+            panic!("index out of bounds: {at} > {N}");
+        }
+        #[allow(unsafe_code, reason = "macro internals")]
+        unsafe {
+            std::slice::from_raw_parts(arr.as_ptr(), at)
+        }
+    }
 }

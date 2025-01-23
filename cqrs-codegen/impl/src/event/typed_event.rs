@@ -76,7 +76,7 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
             args.colon2_token = Some(Default::default());
         }
 
-        types.push(quote!(#path));
+        types.push(path);
     }
 
     let const_doc = format!("Type names of [`{}`] events.", input.ident);
@@ -96,36 +96,44 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
 
     let (impl_generics, ty_generics, _) = input.generics.split_for_impl();
 
-    // TODO: Remove this once generics are supported in const contexts.
-    //       https://github.com/instrumentisto/cqrs-rs/pull/21#issuecomment-1257982811
-    let fake_params = input.generics.params.iter().filter_map(|p| match p {
-        syn::GenericParam::Const(p) => {
-            let ident = &p.ident;
-            let ty = &p.ty;
-            // We can use `0` here, because only numeric types are allowed
-            // as const generics.
-            Some(quote! { const #ident: #ty = 0; })
-        },
-        syn::GenericParam::Lifetime(_) => None,
-        syn::GenericParam::Type(p) => {
-            let ident = &p.ident;
-            Some(quote! { type #ident = (); })
-        },
-    });
-
     let subtypes = types
         .iter()
-        .map(|ty| quote!(<#ty as ::cqrs::TypedEvent>::EVENT_TYPES))
+        .map(|ty| quote! { <#ty as ::cqrs::TypedEvent>::EVENT_TYPES })
         .collect::<Vec<_>>();
+
+    let len = quote! {
+        0 #(+ #subtypes.len())*
+    };
 
     Ok(quote! {
         #[automatically_derived]
         impl#impl_generics ::cqrs::TypedEvent for #type_name#ty_generics #where_clause {
             #[doc = #const_doc]
-            const EVENT_TYPES: &'static [::cqrs::EventType] = {
-                #( #fake_params )*
-                ::cqrs::const_concat_slices!(::cqrs::EventType, #( #subtypes ),*)
-            };
+            const EVENT_TYPES: &'static [::cqrs::EventType] =
+                ::cqrs::private::slice_arr(
+                    &const {
+                        const __LEN: usize = 128;
+                        if #len > __LEN {
+                            panic!("`cqrs::TypedEvent::EVENT_TYPES` limit \
+                                    reached: 128");
+                        }
+
+                        let mut out = [""; __LEN];
+                        let mut len = 0;
+
+                        #({
+                            let mut i = 0;
+                            while i < #subtypes.len() {
+                                out[len] = #subtypes[i];
+                                i += 1;
+                                len += 1;
+                            }
+                        })*
+
+                        out
+                    },
+                    #len,
+                );
         }
     })
 }
