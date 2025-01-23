@@ -2,7 +2,7 @@
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_quote, Result};
+use syn::{parse_quote, spanned::Spanned as _, Error, Result};
 use synstructure::Structure;
 
 use crate::{event::typed_event, util};

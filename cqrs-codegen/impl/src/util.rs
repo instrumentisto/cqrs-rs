@@ -230,7 +230,8 @@ fn find_nested_meta_impl(
             ));
         }
 
-        let parsed = meta.parse_args_with(Meta::parse_terminated)
+        let parsed = meta
+            .parse_args_with(Meta::parse_terminated)
             .map_err(|e| syn::Error::new(Span::call_site(), format!("wut: {e}")))?;
         nested_meta.replace((attr.span(), parsed));
     }

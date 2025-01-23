@@ -46,7 +46,12 @@ pub mod private {
         arr: &'static [&'static str; N],
         at: usize,
     ) -> &'static [&'static str] {
+        if at > N {
+            panic!("index out of bounds: {at} > {N}");
+        }
         #[allow(unsafe_code, reason = "macro internals")]
-        unsafe { std::slice::from_raw_parts(arr.as_ptr(), at) }
+        unsafe {
+            std::slice::from_raw_parts(arr.as_ptr(), at)
+        }
     }
 }
