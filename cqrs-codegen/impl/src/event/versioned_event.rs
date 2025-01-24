@@ -4,7 +4,7 @@ use std::num::NonZeroU8;
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::Result;
+use syn::{parse_quote, Result};
 use synstructure::Structure;
 
 use crate::util;
@@ -21,28 +21,40 @@ pub fn derive(input: syn::DeriveInput) -> Result<TokenStream> {
 fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
     let meta = util::get_nested_meta(&input.attrs, super::ATTR_NAME)?;
 
+    let type_name = &input.ident;
+    let (impl_gens, ty_gens, ver_where_clause) = input.generics.split_for_impl();
+
+    let mut event_where_clause = ver_where_clause
+        .cloned()
+        .unwrap_or_else(|| parse_quote!(where));
+    event_where_clause
+        .predicates
+        .push(parse_quote!(Self: ::cqrs::StaticVersionedEvent));
+
     let const_val = parse_event_version_from_nested_meta(&meta)?;
-    let const_doc = format!("Version of [`{}`] event", input.ident);
-    let additional = quote! {
-        #[doc = #const_doc]
-        #[allow(unsafe_code)]
-        pub const EVENT_VERSION: ::cqrs::EventVersion =
-            unsafe { ::cqrs::EventVersion::new_unchecked(#const_val) };
-    };
+    let const_doc = format!("Version of [`{type_name}`] event");
 
-    let body = quote! {
-        #[inline(always)]
-        fn event_version(&self) -> &'static ::cqrs::EventVersion {
-            &Self::EVENT_VERSION
+    Ok(quote! {
+        #[automatically_derived]
+        impl#impl_gens ::cqrs::StaticVersionedEvent for #type_name#ty_gens
+        #ver_where_clause
+        {
+            #[doc = #const_doc]
+            #[allow(unsafe_code)]
+            const EVENT_VERSION: ::cqrs::EventVersion =
+                unsafe { ::cqrs::EventVersion::new_unchecked(#const_val) };
         }
-    };
 
-    util::render_struct(
-        &input,
-        quote!(::cqrs::VersionedEvent),
-        body,
-        Some(additional),
-    )
+        #[automatically_derived]
+        impl#impl_gens ::cqrs::VersionedEvent for #type_name#ty_gens
+        #event_where_clause
+        {
+            #[inline(always)]
+            fn event_version(&self) -> &'static ::cqrs::EventVersion {
+                &<Self as ::cqrs::StaticVersionedEvent>::EVENT_VERSION
+            }
+        }
+    })
 }
 
 /// Implements [`crate::versioned_event_derive`] macro expansion for enums
@@ -50,15 +62,51 @@ fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
 fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
     util::assert_valid_attr_args_used(&input.attrs, super::ATTR_NAME, super::VALID_ENUM_ARGS)?;
 
-    let mut structure = Structure::try_new(&input)?;
+    let structure = Structure::try_new(&input)?;
+    util::assert_all_enum_variants_have_single_field(&structure, TRAIT_NAME)?;
 
-    super::render_enum_proxy_method_calls(
-        &mut structure,
-        TRAIT_NAME,
-        quote!(::cqrs::VersionedEvent),
-        quote!(event_version),
-        quote!(&'static ::cqrs::EventVersion),
-    )
+    let syn::Data::Enum(data) = input.data else {
+        unreachable!("already checked")
+    };
+
+    let type_name = &input.ident;
+
+    let mut where_clause = input
+        .generics
+        .where_clause
+        .clone()
+        .unwrap_or_else(|| parse_quote!(where));
+    for v in &data.variants {
+        let ty = &v.fields.iter().next().expect("already checked").ty;
+        where_clause
+            .predicates
+            .push(parse_quote!(#ty: ::cqrs::VersionedEvent));
+    }
+
+    let variant = data.variants.iter().map(|v| {
+        let ident = &v.ident;
+        let field = &v.fields.iter().next().expect("already checked");
+        if let Some(field_ident) = &field.ident {
+            quote! { Self::#ident { #field_ident: ref ev } => ev.event_version() }
+        } else {
+            quote! { Self::#ident(ref ev) => ev.event_version() }
+        }
+    });
+
+    let (impl_generics, ty_generics, _) = input.generics.split_for_impl();
+
+    Ok(quote! {
+        #[automatically_derived]
+        impl #impl_generics ::cqrs::VersionedEvent for #type_name #ty_generics
+        #where_clause
+        {
+            fn event_version(&self) -> &'static ::cqrs::EventVersion {
+                match *self {
+                    #( #variant, )*
+                }
+            }
+        }
+    })
 }
 
 /// Parses version of [`cqrs::Event`] from `#[event(...)]` attribute.
@@ -86,7 +134,7 @@ mod spec {
 
         let output = quote! {
             #[automatically_derived]
-            impl Event {
+            impl ::cqrs::StaticVersionedEvent for Event {
                 #[doc = "Version of [`Event`] event"]
                 #[allow(unsafe_code)]
                 pub const EVENT_VERSION: ::cqrs::EventVersion =
@@ -94,10 +142,13 @@ mod spec {
             }
 
             #[automatically_derived]
-            impl ::cqrs::VersionedEvent for Event {
+            impl ::cqrs::VersionedEvent for Event
+            where
+                Self: ::cqrs::StaticVersionedEvent
+            {
                 #[inline(always)]
                 fn event_version(&self) -> &'static ::cqrs::EventVersion {
-                    &Self::EVENT_VERSION
+                    &<Self as ::cqrs::StaticVersionedEvent>::EVENT_VERSION
                 }
             }
         };
@@ -117,17 +168,19 @@ mod spec {
         };
 
         let output = quote! {
-            const _: () = {
-                #[automatically_derived]
-                impl ::cqrs::VersionedEvent for Event {
-                    fn event_version(&self) -> &'static ::cqrs::EventVersion {
-                        match *self {
-                            Event::Event1(ref ev,) => {{ ev.event_version() }}
-                            Event::Event2{other_event: ref other_event,} => {{ other_event.event_version() }}
-                        }
+            #[automatically_derived]
+            impl ::cqrs::VersionedEvent for Event
+            where
+                Event1: ::cqrs::VersionedEvent,
+                Event2: ::cqrs::VersionedEvent
+            {
+                fn event_version(&self) -> &'static ::cqrs::EventVersion {
+                    match *self {
+                        Event::Event1(ref ev,) => {{ ev.event_version() }}
+                        Event::Event2{other_event: ref other_event,} => {{ other_event.event_version() }}
                     }
                 }
-            };
+            }
         };
 
         assert_eq!(derive(input).unwrap().to_string(), output.to_string())

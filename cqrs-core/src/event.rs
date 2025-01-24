@@ -64,6 +64,12 @@ pub trait VersionedEvent {
     fn event_version(&self) -> &'static EventVersion;
 }
 
+/// [`VersionedEvent`] with a statically known [`EventVersion`].
+pub trait StaticVersionedEvent {
+    /// Version of this [`Event`].
+    const EVENT_VERSION: EventVersion;
+}
+
 /// Structured pair combining an [`Event`] and its [`EventNumber`].
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct NumberedEvent<Ev> {
