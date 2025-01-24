@@ -28,12 +28,6 @@ pub trait Event {
     fn event_type(&self) -> EventType;
 }
 
-/// [`Event`] with a statically known [`EventType`].
-pub trait StaticTypedEvent {
-    /// Type of this [`Event`].
-    const EVENT_TYPE: EventType;
-}
-
 /// State that can be calculated by applying specified [`Event`].
 ///
 /// Usually, implemented by an [`Aggregate`].
@@ -46,6 +40,12 @@ pub trait EventSourced<Ev: ?Sized> {
 pub trait TypedEvent {
     /// All available types of this [`Event`].
     const EVENT_TYPES: &'static [EventType];
+}
+
+/// [`TypedEvent`] with a statically known [`EventType`].
+pub trait StaticTypedEvent {
+    /// Type of this [`Event`].
+    const EVENT_TYPE: EventType;
 }
 
 /// Different version of [`Event`] with the same [`EventType`].
