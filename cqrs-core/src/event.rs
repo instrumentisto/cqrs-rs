@@ -42,6 +42,12 @@ pub trait TypedEvent {
     const EVENT_TYPES: &'static [EventType];
 }
 
+/// [`TypedEvent`] with a statically known [`EventType`].
+pub trait StaticTypedEvent {
+    /// Type of this [`Event`].
+    const EVENT_TYPE: EventType;
+}
+
 /// Different version of [`Event`] with the same [`EventType`].
 ///
 /// The single type of [`Event`] may have different versions, which allows

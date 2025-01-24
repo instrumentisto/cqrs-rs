@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use cqrs::TypedEvent as _;
+use cqrs::{StaticTypedEvent as _, TypedEvent as _};
 use cqrs_codegen::{Aggregate, AggregateEvent, Event};
 
 #[derive(Aggregate, Default)]

@@ -1,7 +1,5 @@
 //! Codegen for [`cqrs::TypedEvent`].
 
-use std::collections::HashSet;
-
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{parse_quote, spanned::Spanned as _, Error, Result};
@@ -21,11 +19,25 @@ pub fn derive(input: syn::DeriveInput) -> Result<TokenStream> {
 /// Implements `cqrs::TypedEvent` part of [`crate::event_derive`] macro
 /// expansion for structs.
 fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
-    let body = quote! {
-        const EVENT_TYPES: &'static [::cqrs::EventType] = &[Self::EVENT_TYPE];
-    };
+    let type_name = &input.ident;
+    let (impl_gens, ty_gens, where_clause) = input.generics.split_for_impl();
 
-    util::render_struct(&input, quote!(::cqrs::TypedEvent), body, None)
+    let mut where_clause = where_clause.cloned().unwrap_or_else(|| parse_quote!(where));
+    where_clause
+        .predicates
+        .push(parse_quote!(Self: ::cqrs::StaticTypedEvent));
+
+    let const_doc = format!("Type names of [`{type_name}`] events.");
+
+    Ok(quote! {
+        #[automatically_derived]
+        impl#impl_gens ::cqrs::TypedEvent for #type_name#ty_gens #where_clause {
+            #[doc = #const_doc]
+            const EVENT_TYPES: &'static [::cqrs::EventType] = &[
+                <Self as ::cqrs::StaticTypedEvent>::EVENT_TYPE
+            ];
+        }
+    })
 }
 
 /// Implements `cqrs::TypedEvent` part of [`crate::event_derive`] macro
@@ -79,9 +91,8 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
         types.push(path);
     }
 
-    let const_doc = format!("Type names of [`{}`] events.", input.ident);
-
     let type_name = &input.ident;
+    let const_doc = format!("Type names of [`{type_name}`] events.");
 
     let mut where_clause = input
         .generics
@@ -151,8 +162,14 @@ mod spec {
 
         let output = quote! {
             #[automatically_derived]
-            impl ::cqrs::TypedEvent for Event {
-                const EVENT_TYPES: &'static [::cqrs::EventType] = &[Self::EVENT_TYPE];
+            impl ::cqrs::TypedEvent for Event
+            where
+                Self: ::cqrs::StaticTypedEvent
+            {
+                #[doc = "Type names of [`Event`] events."]
+                const EVENT_TYPES: &'static [::cqrs::EventType] = &[
+                    <Self as ::cqrs::StaticTypedEvent>::EVENT_TYPE
+                ];
             }
         };
 

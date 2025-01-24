@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use cqrs::Event as _;
+use cqrs::{Event as _, StaticTypedEvent as _};
 use cqrs_codegen::Event;
 
 #[test]

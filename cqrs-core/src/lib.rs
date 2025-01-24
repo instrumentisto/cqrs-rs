@@ -47,7 +47,7 @@ pub mod private {
         at: usize,
     ) -> &'static [&'static str] {
         if at > N {
-            panic!("index out of bounds: {at} > {N}");
+            panic!("index out of bounds");
         }
         #[allow(unsafe_code, reason = "macro internals")]
         unsafe {

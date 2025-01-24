@@ -2,7 +2,7 @@
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_quote, spanned::Spanned as _, Error, Result};
+use syn::{parse_quote, Result};
 use synstructure::Structure;
 
 use crate::{event::typed_event, util};
@@ -22,20 +22,37 @@ fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
     let meta = util::get_nested_meta(&input.attrs, super::ATTR_NAME)?;
 
     let const_val = parse_event_type_from_nested_meta(&meta)?;
-    let const_doc = format!("Type name of [`{}`] event", input.ident);
-    let additional = quote! {
-        #[doc = #const_doc]
-        pub const EVENT_TYPE: ::cqrs::EventType = #const_val;
-    };
+    let const_doc = format!("Type name of [`{}`] event.", input.ident);
 
-    let body = quote! {
-        #[inline(always)]
-        fn event_type(&self) -> ::cqrs::EventType {
-            Self::EVENT_TYPE
+    let type_name = &input.ident;
+    let (impl_gens, ty_gens, type_where_clause) = input.generics.split_for_impl();
+
+    let mut event_where_clause = type_where_clause
+        .cloned()
+        .unwrap_or_else(|| parse_quote!(where));
+    event_where_clause
+        .predicates
+        .push(parse_quote!(Self: ::cqrs::StaticTypedEvent));
+
+    Ok(quote! {
+        #[automatically_derived]
+        impl#impl_gens ::cqrs::StaticTypedEvent for #type_name#ty_gens
+        #type_where_clause
+        {
+            #[doc = #const_doc]
+            const EVENT_TYPE: ::cqrs::EventType = #const_val;
         }
-    };
 
-    util::render_struct(&input, quote!(::cqrs::Event), body, Some(additional))
+        #[automatically_derived]
+        impl#impl_gens ::cqrs::Event for #type_name#ty_gens
+        #event_where_clause
+        {
+            #[inline(always)]
+            fn event_type(&self) -> ::cqrs::EventType {
+                <Self as ::cqrs::StaticTypedEvent>::EVENT_TYPE
+            }
+        }
+    })
 }
 
 /// Implements [`crate::event_derive`] macro expansion for enums
@@ -67,8 +84,8 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
     let variant = data.variants.iter().map(|v| {
         let ident = &v.ident;
         let field = &v.fields.iter().next().expect("already checked");
-        if field.ident.is_some() {
-            quote! { Self::#ident { #field: ref ev } => ev.event_type() }
+        if let Some(field_ident) = &field.ident {
+            quote! { Self::#ident { #field_ident: ref ev } => ev.event_type() }
         } else {
             quote! { Self::#ident(ref ev) => ev.event_type() }
         }
@@ -115,21 +132,28 @@ mod spec {
 
         let output = quote! {
             #[automatically_derived]
-            impl Event {
-                #[doc = "Type name of [`Event`] event"]
-                pub const EVENT_TYPE: ::cqrs::EventType = "event";
+            impl ::cqrs::StaticTypedEvent for Event {
+                #[doc = "Type name of [`Event`] event."]
+                const EVENT_TYPE: ::cqrs::EventType = "event";
             }
-
             #[automatically_derived]
-            impl ::cqrs::Event for Event {
+            impl ::cqrs::Event for Event
+            where
+                Self: ::cqrs::StaticTypedEvent
+            {
                 #[inline(always)]
                 fn event_type(&self) -> ::cqrs::EventType {
-                    Self::EVENT_TYPE
+                    <Self as ::cqrs::StaticTypedEvent>::EVENT_TYPE
                 }
             }
             #[automatically_derived]
-            impl ::cqrs::TypedEvent for Event {
-                const EVENT_TYPES: &'static [::cqrs::EventType] = &[Self::EVENT_TYPE];
+            impl ::cqrs::TypedEvent for Event
+            where
+                Self: ::cqrs::StaticTypedEvent
+            {
+                const EVENT_TYPES: &'static [::cqrs::EventType] = &[
+                    <Self as ::cqrs::StaticTypedEvent>::EVENT_TYPE
+                ];
             }
         };
 
@@ -150,7 +174,11 @@ mod spec {
         let output = quote! {
             const _: () = {
                 #[automatically_derived]
-                impl ::cqrs::Event for Event {
+                impl ::cqrs::Event for Event
+                where
+                    Event1: ::cqrs::Event,
+                    Event2: ::cqrs::Event
+                {
                     fn event_type(&self) -> ::cqrs::EventType {
                         match *self {
                             Event::Event1(ref ev,) => {{ ev.event_type() }}
@@ -166,10 +194,39 @@ mod spec {
             {
                 #[doc = "Type names of [`Event`] events."]
                 const EVENT_TYPES: &'static [::cqrs::EventType] = {
-                    ::cqrs::const_concat_slices!(
-                        ::cqrs::EventType,
-                        <Event1 as ::cqrs::TypedEvent>::EVENT_TYPES,
-                        <Event2 as ::cqrs::TypedEvent>::EVENT_TYPES
+                    ::cqrs::private::slice_arr(
+                        &const {
+                            const __LEN: usize = 128;
+                            if 0
+                                + <Event1 as ::cqrs::TypedEvent>::EVENT_TYPES
+                                     .len()
+                                + <Event2 as ::cqrs::TypedEvent>::EVENT_TYPES
+                                     .len()
+                                > __LEN {
+                                panic!("`cqrs::TypedEvent::EVENT_TYPES` limit reached");
+                            }
+
+                            let mut out = [""; __LEN];
+                            let mut len = 0;
+
+                            let mut i = 0;
+                            while i < <Event1 as ::cqrs::TypedEvent>::EVENT_TYPES.len() {
+                                out[len] = <Event1 as ::cqrs::TypedEvent>::EVENT_TYPES[i];
+                                i += 1;
+                                len += 1;
+                            }
+
+                            let mut i = 0;
+                            while i < <Event2 as ::cqrs::TypedEvent>::EVENT_TYPES.len() {
+                                out[len] = <Event2 as ::cqrs::TypedEvent>::EVENT_TYPES[i];
+                                i += 1;
+                                len += 1;
+                            }
+
+                            out
+                        },
+                        0 + <Event1 as ::cqrs::TypedEvent>::EVENT_TYPES.len()
+                          + <Event2 as ::cqrs::TypedEvent>::EVENT_TYPES.len(),
                     )
                 };
             }
