@@ -74,6 +74,17 @@ pub trait CommandGateway<Cmd, Mt> {
 }
 
 #[async_trait(?Send)]
+pub trait BatchCommandGateway<Cmd: Command, CMDs: IntoIterator<Item = Cmd>, Mt> {
+    type Err;
+    type Ok;
+
+    async fn send_many(&self, cmds: CMDs, meta: Mt) -> Result<Vec<Self::Ok>, Self::Err>
+    where
+        Cmd: 'async_trait,
+        CMDs: 'async_trait;
+}
+
+#[async_trait(?Send)]
 pub trait CommandBus<Cmd: Command> {
     type Err;
     type Ok;
