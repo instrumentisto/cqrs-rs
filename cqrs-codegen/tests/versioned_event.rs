@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use cqrs::VersionedEvent as _;
+use cqrs::{StaticVersionedEvent as _, VersionedEvent as _};
 use cqrs_codegen::{Event, VersionedEvent};
 
 #[test]
