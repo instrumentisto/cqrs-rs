@@ -40,7 +40,6 @@ fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
         #ver_where_clause
         {
             #[doc = #const_doc]
-            #[allow(unsafe_code)]
             const EVENT_VERSION: ::cqrs::EventVersion =
                 unsafe { ::cqrs::EventVersion::new_unchecked(#const_val) };
         }
@@ -136,7 +135,6 @@ mod spec {
             #[automatically_derived]
             impl ::cqrs::StaticVersionedEvent for Event {
                 #[doc = "Version of [`Event`] event"]
-                #[allow(unsafe_code)]
                 pub const EVENT_VERSION: ::cqrs::EventVersion =
                     unsafe { ::cqrs::EventVersion::new_unchecked(1u8) };
             }
