@@ -274,24 +274,52 @@ impl Version {
     }
 
     /// Increments [`Version`] number to the next in sequence.
+    ///
+    /// # Panics
+    ///
+    /// If overflow occurred.
     #[inline]
     pub fn incr(&mut self) {
-        match *self {
-            Version::Initial => *self = Version::Number(EventNumber::MIN_VALUE),
-            Version::Number(ref mut en) => en.incr(),
-        }
+        *self = self.next();
+    }
+
+    /// Returns the next [`Version`] number in sequence.
+    ///
+    /// # Panics
+    ///
+    /// If overflow occurred.
+    #[inline]
+    pub fn next(self) -> Self {
+        self.checked_next().expect("`Version` overflowed")
+    }
+
+    /// Returns the next [`Version`] number in sequence.
+    ///
+    /// Returns [`None`] if overflow occurred.
+    #[inline]
+    pub fn checked_next(self) -> Option<Self> {
+        Some(Version::Number(self.checked_next_event()?))
     }
 
     /// Returns next [`EventNumber`] in a sequence.
+    ///
+    /// # Panics
+    ///
+    /// If overflow occurred.
     #[inline]
     pub fn next_event(self) -> EventNumber {
-        match self {
+        self.checked_next_event().expect("`Version` overflowed")
+    }
+
+    /// Returns next [`EventNumber`] in a sequence.
+    ///
+    /// Returns [`None`] if overflow occurred.
+    #[inline]
+    pub fn checked_next_event(self) -> Option<EventNumber> {
+        Some(match self {
             Version::Initial => EventNumber::MIN_VALUE,
-            Version::Number(mut en) => {
-                en.incr();
-                en
-            }
-        }
+            Version::Number(en) => en.checked_next()?,
+        })
     }
 
     /// Returns [`Version`] number as [`EventNumber`], returning [`None`] if the
