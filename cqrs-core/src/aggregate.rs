@@ -12,7 +12,9 @@ use std::{
 
 use async_trait::async_trait;
 
-use super::{Event, EventNumber, EventSourced, NumberedEvent};
+#[cfg(doc)]
+use super::Event;
+use super::{EventNumber, EventSourced, NumberedEvent};
 
 /// [DDD aggregate] that represents an isolated tree of entities, is
 /// capable of handling [`Command`]s and is always kept in a consistent state.
@@ -274,24 +276,52 @@ impl Version {
     }
 
     /// Increments [`Version`] number to the next in sequence.
+    ///
+    /// # Panics
+    ///
+    /// If the overflow occurred.
     #[inline]
     pub fn incr(&mut self) {
-        match *self {
-            Version::Initial => *self = Version::Number(EventNumber::MIN_VALUE),
-            Version::Number(ref mut en) => en.incr(),
-        }
+        *self = self.next();
     }
 
-    /// Returns next [`EventNumber`] in a sequence.
+    /// Returns the next [`Version`] number in a sequence.
+    ///
+    /// # Panics
+    ///
+    /// If the overflow occurred.
+    #[inline]
+    pub fn next(self) -> Self {
+        self.next_checked().expect("`Version` overflowed")
+    }
+
+    /// Returns the next [`Version`] number in a sequence.
+    ///
+    /// Returns [`None`] if the overflow occurred.
+    #[inline]
+    pub fn next_checked(self) -> Option<Self> {
+        Some(Version::Number(self.next_event_checked()?))
+    }
+
+    /// Returns the next [`EventNumber`] in a sequence.
+    ///
+    /// # Panics
+    ///
+    /// If the overflow occurred.
     #[inline]
     pub fn next_event(self) -> EventNumber {
-        match self {
+        self.next_event_checked().expect("`Version` overflowed")
+    }
+
+    /// Returns the next [`EventNumber`] in a sequence.
+    ///
+    /// Returns [`None`] if the overflow occurred.
+    #[inline]
+    pub fn next_event_checked(self) -> Option<EventNumber> {
+        Some(match self {
             Version::Initial => EventNumber::MIN_VALUE,
-            Version::Number(mut en) => {
-                en.incr();
-                en
-            }
-        }
+            Version::Number(en) => en.next_checked()?,
+        })
     }
 
     /// Returns [`Version`] number as [`EventNumber`], returning [`None`] if the

@@ -270,17 +270,34 @@ impl EventNumber {
     }
 
     /// Increments [`EventNumber`] to the next value.
+    ///
+    /// # Panics
+    ///
+    /// If the overflow occurred.
     #[inline]
     pub fn incr(&mut self) {
-        self.0 = NonZeroU128::new(self.0.get() + 1).unwrap();
+        *self = self.next();
     }
 
     /// Gets the next [`EventNumber`] after the current one.
+    ///
+    /// Returns [`None`] if the overflow occurred.
+    pub fn next_checked(self) -> Option<Self> {
+        self.0
+            .get()
+            .checked_add(1)
+            .map(|n| Self(NonZeroU128::new(n).unwrap()))
+    }
+
+    /// Gets the next [`EventNumber`] after the current one.
+    ///
+    /// # Panics
+    ///
+    /// If the overflow occurred.
     #[inline]
     #[must_use]
-    pub fn next(mut self) -> Self {
-        self.0 = NonZeroU128::new(self.0.get() + 1).unwrap();
-        self
+    pub fn next(self) -> Self {
+        self.next_checked().expect("`EventNumber` overflowed")
     }
 }
 
