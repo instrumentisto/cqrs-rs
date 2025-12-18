@@ -277,48 +277,48 @@ impl Version {
     ///
     /// # Panics
     ///
-    /// If overflow occurred.
+    /// If the overflow occurred.
     #[inline]
     pub fn incr(&mut self) {
         *self = self.next();
     }
 
-    /// Returns the next [`Version`] number in sequence.
+    /// Returns the next [`Version`] number in a sequence.
     ///
     /// # Panics
     ///
-    /// If overflow occurred.
+    /// If the overflow occurred.
     #[inline]
     pub fn next(self) -> Self {
-        self.checked_next().expect("`Version` overflowed")
+        self.next_checked().expect("`Version` overflowed")
     }
 
-    /// Returns the next [`Version`] number in sequence.
+    /// Returns the next [`Version`] number in a sequence.
     ///
-    /// Returns [`None`] if overflow occurred.
+    /// Returns [`None`] if the overflow occurred.
     #[inline]
-    pub fn checked_next(self) -> Option<Self> {
-        Some(Version::Number(self.checked_next_event()?))
+    pub fn next_checked(self) -> Option<Self> {
+        Some(Version::Number(self.next_event_checked()?))
     }
 
-    /// Returns next [`EventNumber`] in a sequence.
+    /// Returns the next [`EventNumber`] in a sequence.
     ///
     /// # Panics
     ///
-    /// If overflow occurred.
+    /// If the overflow occurred.
     #[inline]
     pub fn next_event(self) -> EventNumber {
-        self.checked_next_event().expect("`Version` overflowed")
+        self.next_event_checked().expect("`Version` overflowed")
     }
 
-    /// Returns next [`EventNumber`] in a sequence.
+    /// Returns the next [`EventNumber`] in a sequence.
     ///
-    /// Returns [`None`] if overflow occurred.
+    /// Returns [`None`] if the overflow occurred.
     #[inline]
-    pub fn checked_next_event(self) -> Option<EventNumber> {
+    pub fn next_event_checked(self) -> Option<EventNumber> {
         Some(match self {
             Version::Initial => EventNumber::MIN_VALUE,
-            Version::Number(en) => en.checked_next()?,
+            Version::Number(en) => en.next_checked()?,
         })
     }
 

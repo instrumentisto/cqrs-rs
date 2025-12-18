@@ -273,7 +273,7 @@ impl EventNumber {
     ///
     /// # Panics
     ///
-    /// If overflow occurred.
+    /// If the overflow occurred.
     #[inline]
     pub fn incr(&mut self) {
         *self = self.next();
@@ -281,8 +281,8 @@ impl EventNumber {
 
     /// Gets the next [`EventNumber`] after the current one.
     ///
-    /// Returns [`None`] if overflow occurred.
-    pub fn checked_next(self) -> Option<Self> {
+    /// Returns [`None`] if the overflow occurred.
+    pub fn next_checked(self) -> Option<Self> {
         self.0
             .get()
             .checked_add(1)
@@ -290,14 +290,14 @@ impl EventNumber {
     }
 
     /// Gets the next [`EventNumber`] after the current one.
-    /// 
+    ///
     /// # Panics
-    /// 
-    /// If overflow occurred.
+    ///
+    /// If the overflow occurred.
     #[inline]
     #[must_use]
     pub fn next(self) -> Self {
-        self.checked_next().expect("`EventNumber` overflowed")
+        self.next_checked().expect("`EventNumber` overflowed")
     }
 }
 
