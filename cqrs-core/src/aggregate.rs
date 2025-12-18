@@ -12,7 +12,9 @@ use std::{
 
 use async_trait::async_trait;
 
-use super::{Event, EventNumber, EventSourced, NumberedEvent};
+#[cfg(doc)]
+use super::Event;
+use super::{EventNumber, EventSourced, NumberedEvent};
 
 /// [DDD aggregate] that represents an isolated tree of entities, is
 /// capable of handling [`Command`]s and is always kept in a consistent state.
