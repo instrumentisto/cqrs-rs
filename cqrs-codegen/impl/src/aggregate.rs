@@ -2,7 +2,7 @@
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{spanned::Spanned as _, Error, Result};
+use syn::{parse_quote, spanned::Spanned as _, Error, Result};
 
 use crate::util;
 
@@ -21,35 +21,47 @@ pub fn derive(input: syn::DeriveInput) -> Result<TokenStream> {
 fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
     let meta = util::get_nested_meta(&input.attrs, ATTR_NAME)?;
 
-    let const_val = parse_aggregate_type(&meta)?;
-    let const_doc = format!("Type name of [`{}`] aggregate", input.ident);
-    let additional = quote! {
-        #[doc = #const_doc]
-        pub const AGGREGATE_TYPE: ::cqrs::AggregateType = #const_val;
-    };
-
     let data = match &input.data {
         syn::Data::Struct(data) => data,
         _ => unreachable!(),
     };
 
+    let const_val = parse_aggregate_type(&meta)?;
+    let const_doc = format!("Type name of [`{}`] aggregate", input.ident);
+
     let (id_type, id_field) = get_id_field(&data.fields)?;
 
-    let body = quote! {
-        type Id = #id_type;
+    let type_name = &input.ident;
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+    let mut extended_generics = input.generics.clone();
+    extended_generics
+        .make_where_clause()
+        .predicates
+        .push(parse_quote! { Self: ::core::default::Default });
+    let (_, _, extended_where_clause) = extended_generics.split_for_impl();
 
-        #[inline(always)]
-        fn aggregate_type(&self) -> ::cqrs::AggregateType {
-            Self::AGGREGATE_TYPE
+    Ok(quote! {
+        #[automatically_derived]
+        impl#impl_generics #type_name#ty_generics #where_clause {
+            #[doc = #const_doc]
+            pub const AGGREGATE_TYPE: ::cqrs::AggregateType = #const_val;
         }
 
-        #[inline(always)]
-        fn id(&self) -> &Self::Id {
-            &self.#id_field
-        }
-    };
+        #[automatically_derived]
+        impl#impl_generics ::cqrs::Aggregate for #type_name#ty_generics #extended_where_clause {
+            type Id = #id_type;
 
-    util::render_struct(&input, quote!(::cqrs::Aggregate), body, Some(additional))
+            #[inline(always)]
+            fn aggregate_type(&self) -> ::cqrs::AggregateType {
+                Self::AGGREGATE_TYPE
+            }
+
+            #[inline(always)]
+            fn id(&self) -> &Self::Id {
+                &self.#id_field
+            }
+        }
+    })
 }
 
 /// Reports error if [`crate::aggregate_derive`] macro applied to enums.

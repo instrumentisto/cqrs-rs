@@ -30,37 +30,6 @@ where
     }
 }
 
-/// Renders implementation of a `trait_path` trait for a struct with a given
-/// `body`, and optionally renders some arbitrary `impl` block code with a given
-/// `additional_code`.
-pub(crate) fn render_struct(
-    input: &syn::DeriveInput,
-    trait_path: TokenStream,
-    body: TokenStream,
-    additional_code: Option<TokenStream>,
-) -> Result<TokenStream> {
-    let type_name = &input.ident;
-    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
-
-    let additional = additional_code.map(|code| {
-        quote! {
-            #[automatically_derived]
-            impl#impl_generics #type_name#ty_generics #where_clause {
-                #code
-            }
-        }
-    });
-
-    Ok(quote! {
-        #additional
-
-        #[automatically_derived]
-        impl#impl_generics #trait_path for #type_name#ty_generics #where_clause {
-            #body
-        }
-    })
-}
-
 /// Renders field identifier for named or unnamed struct.
 pub(crate) fn render_field_ident(index: usize, field: &syn::Field) -> TokenStream {
     match &field.ident {

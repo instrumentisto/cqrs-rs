@@ -17,14 +17,18 @@ pub fn derive(input: syn::DeriveInput) -> Result<TokenStream> {
 
 /// Implements [`crate::registered_event_derive`] macro expansion for structs.
 fn derive_struct(input: syn::DeriveInput) -> Result<proc_macro2::TokenStream> {
-    let body = quote! {
-        #[inline(always)]
-        fn type_id(&self) -> ::core::any::TypeId {
-            ::core::any::TypeId::of::<Self>()
-        }
-    };
+    let type_name = &input.ident;
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
-    util::render_struct(&input, quote!(::cqrs::RegisteredEvent), body, None)
+    Ok(quote! {
+        #[automatically_derived]
+        impl#impl_generics ::cqrs::RegisteredEvent for #type_name#ty_generics #where_clause {
+            #[inline(always)]
+            fn type_id(&self) -> ::core::any::TypeId {
+                ::core::any::TypeId::of::<Self>()
+            }
+        }
+    })
 }
 
 /// Implements [`crate::registered_event_derive`] macro expansion for enums

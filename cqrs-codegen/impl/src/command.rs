@@ -51,15 +51,19 @@ fn derive_struct(input: syn::DeriveInput) -> Result<TokenStream> {
         }
     });
 
-    let body = quote! {
-        type Aggregate = #aggregate;
+    let type_name = &input.ident;
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
-        #id
+    Ok(quote! {
+        #[automatically_derived]
+        impl#impl_generics ::cqrs::Command for #type_name#ty_generics #where_clause {
+            type Aggregate = #aggregate;
 
-        #ver
-    };
+            #id
 
-    util::render_struct(&input, quote!(::cqrs::Command), body, None)
+            #ver
+        }
+    })
 }
 
 /// Reports error if [`crate::command_derive`] macro applied to enums.
