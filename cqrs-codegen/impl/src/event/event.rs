@@ -172,56 +172,63 @@ mod spec {
         };
 
         let output = quote! {
-            #[automatically_derived]
-            impl ::cqrs::Event for Event
-            where
-                Event1: ::cqrs::Event,
-                Event2: ::cqrs::Event
-            {
-                fn event_type(&self) -> ::cqrs::EventType {
-                    match *self {
-                        Self::Event1(ref ev) => ev.event_type(),
-                        Self::Event2{ other_event: ref ev } => ev.event_type(),
+            const _: () = {
+                #[automatically_derived]
+                impl ::cqrs::Event for Event
+                where
+                    Event1: ::cqrs::Event,
+                    Event2: ::cqrs::Event
+                {
+                    fn event_type(&self) -> ::cqrs::EventType {
+                        match *self {
+                            Event::Event1(ref ev,) => {{ ev.event_type() }}
+                            Event::Event2{other_event: ref other_event,} => {{ other_event.event_type() }}
+                        }
                     }
                 }
-            }
+            };
             #[automatically_derived]
             impl ::cqrs::TypedEvent for Event
             where Event1: ::cqrs::TypedEvent,
                   Event2: ::cqrs::TypedEvent
             {
                 #[doc = "Type names of [`Event`] events."]
-                const EVENT_TYPES: &'static [::cqrs::EventType] = ::cqrs::private::slice_arr(
-                    &const {
-                        const LEN: usize = 0
-                            + <Event1 as ::cqrs::TypedEvent>::EVENT_TYPES.len()
-                            + <Event2 as ::cqrs::TypedEvent>::EVENT_TYPES.len();
-                        let mut out = [""; LEN];
-                        let mut len = 0;
+                const EVENT_TYPES: &'static [::cqrs::EventType] = {
+                    ::cqrs::private::slice_arr(
+                        &const {
+                            const __LEN: usize = 256;
+                            if 0
+                                + <Event1 as ::cqrs::TypedEvent>::EVENT_TYPES
+                                     .len()
+                                + <Event2 as ::cqrs::TypedEvent>::EVENT_TYPES
+                                     .len()
+                                > __LEN {
+                                panic!("`cqrs::TypedEvent::EVENT_TYPES` limit reached");
+                            }
 
-                        {
+                            let mut out = [""; __LEN];
+                            let mut len = 0;
+
                             let mut i = 0;
                             while i < <Event1 as ::cqrs::TypedEvent>::EVENT_TYPES.len() {
                                 out[len] = <Event1 as ::cqrs::TypedEvent>::EVENT_TYPES[i];
                                 i += 1;
                                 len += 1;
                             }
-                        }
 
-                        {
                             let mut i = 0;
                             while i < <Event2 as ::cqrs::TypedEvent>::EVENT_TYPES.len() {
                                 out[len] = <Event2 as ::cqrs::TypedEvent>::EVENT_TYPES[i];
                                 i += 1;
                                 len += 1;
                             }
-                        }
 
-                        out
-                    },
-                    0 + <Event1 as ::cqrs::TypedEvent>::EVENT_TYPES.len()
-                      + <Event2 as ::cqrs::TypedEvent>::EVENT_TYPES.len(),
-                );
+                            out
+                        },
+                        0 + <Event1 as ::cqrs::TypedEvent>::EVENT_TYPES.len()
+                          + <Event2 as ::cqrs::TypedEvent>::EVENT_TYPES.len(),
+                    )
+                };
             }
         };
 
