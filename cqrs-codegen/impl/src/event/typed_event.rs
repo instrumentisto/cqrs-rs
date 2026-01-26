@@ -123,10 +123,10 @@ fn derive_enum(input: syn::DeriveInput) -> Result<TokenStream> {
             const EVENT_TYPES: &'static [::cqrs::EventType] =
                 ::cqrs::private::slice_arr(
                     &const {
-                        const __LEN: usize = 128;
+                        const __LEN: usize = 256;
                         if #len > __LEN {
                             panic!("`cqrs::TypedEvent::EVENT_TYPES` limit \
-                                    reached: 128");
+                                    reached: 256");
                         }
 
                         let mut out = [""; __LEN];
