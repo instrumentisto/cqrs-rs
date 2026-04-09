@@ -196,7 +196,7 @@ mod spec {
                 const EVENT_TYPES: &'static [::cqrs::EventType] = {
                     ::cqrs::private::slice_arr(
                         &const {
-                            const __LEN: usize = 256;
+                            const __LEN: usize = 512;
                             if 0
                                 + <Event1 as ::cqrs::TypedEvent>::EVENT_TYPES
                                      .len()
