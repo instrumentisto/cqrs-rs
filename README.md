@@ -1,5 +1,11 @@
 # cqrs
 
+
+## Status
+
+__PROJECT IS CLOSED AND ARCHIVED. NO MAINTAINING WILL BE CONTINUED.__
+
+
 `cqrs` is an event-driven framework for writing software that uses events as
 the "source of truth" and implements command–query responsibility separation (CQRS).
 
